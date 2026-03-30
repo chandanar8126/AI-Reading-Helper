@@ -1,4 +1,5 @@
 # AI Reading Helper
+AI Reading Helper for dyslexia students
 
 An AI-powered application that helps users improve reading skills through text simplification, OCR, and text-to-speech features.
 
