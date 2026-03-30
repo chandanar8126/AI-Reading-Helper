@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Reading Helper</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">AI Reading Helper</div>
+    <div class="nav-links">
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('practice') }}">Practice</a>
+      <a href="{{ url_for('history') }}">History</a>
+      
+      {% if current_user %}
+        <!-- Logged In User Menu -->
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('resources') }}">Resources</a>
+        <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+        <a href="{{ url_for('profile') }}">Profile</a>
+        <a href="{{ url_for('about') }}">About</a>
+        <a href="{{ url_for('logout') }}" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 0.6rem 1.2rem; border-radius: 8px;">Logout</a>
+      {% else %}
+        <!-- Guest User Menu -->
+        <a href="{{ url_for('about') }}">About</a>
+        <a href="{{ url_for('contact') }}">Contact</a>
+        <a href="{{ url_for('login') }}" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 0.6rem 1.2rem; border-radius: 8px;">Login</a>
+        <a href="{{ url_for('signup') }}" style="background: linear-gradient(135deg, var(--secondary), #db2777); color: white; padding: 0.6rem 1.2rem; border-radius: 8px;">Sign Up</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash-message flash-{{ category }}">
+            {{ message }}
+            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; float: right; font-size: 1.2rem;">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 AI Reading Helper. All rights reserved.</p>
+  </footer>
+
+  <!-- Load JavaScript -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  
+  <style>
+    /* Flash Messages Styling */
+    .flash-messages {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 10000;
+      max-width: 400px;
+    }
+    
+    .flash-message {
+      padding: 1rem 1.5rem;
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      animation: slideIn 0.3s ease-out;
+      font-weight: 500;
+    }
+    
+    .flash-success {
+      background: #10b981;
+      color: white;
+    }
+    
+    .flash-error {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .flash-warning {
+      background: #f59e0b;
+      color: white;
+    }
+    
+    .flash-info {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</body>
+</html>

@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="resources-container">
+  
+  <!-- Hero Section -->
+  <div class="resources-hero">
+    <h1 class="hero-title">📚 Learning Hub</h1>
+    <p class="hero-subtitle">Curated articles, videos, and exercises to improve your reading skills</p>
+    
+    <div class="category-filter">
+      <button class="filter-btn active" data-filter="all">All Resources</button>
+      <button class="filter-btn" data-filter="article">📄 Articles</button>
+      <button class="filter-btn" data-filter="video">🎥 Videos</button>
+      <button class="filter-btn" data-filter="exercise">✍️ Exercises</button>
+    </div>
+  </div>
+
+  <!-- Featured -->
+  <div class="featured-section">
+    <h2 class="section-title">Featured This Week</h2>
+    
+    <div class="featured-grid">
+
+      <div class="featured-card resource-item" data-type="article">
+        <div class="featured-image gradient-1">
+          <div class="featured-icon">📖</div>
+        </div>
+        <div class="featured-content">
+          <div class="resource-badges">
+            <span class="badge">Article</span>
+            <span class="badge basic">Basic</span>
+          </div>
+          <h3 class="resource-title">Complete Guide to Reading Comprehension</h3>
+          <p class="resource-description">
+            Master the fundamentals of understanding what you read with proven strategies.
+          </p>
+          <div class="resource-meta">
+            <span>15 min read</span>
+            <span>2.5k readers</span>
+          </div>
+          <a href="#" class="resource-link">Read →</a>
+        </div>
+      </div>
+
+      <div class="featured-card resource-item" data-type="video">
+        <div class="featured-image gradient-2">
+          <div class="featured-icon">🎥</div>
+        </div>
+        <div class="featured-content">
+          <div class="resource-badges">
+            <span class="badge">Video</span>
+            <span class="badge intermediate">Intermediate</span>
+          </div>
+          <h3 class="resource-title">Speed Reading Techniques</h3>
+          <p class="resource-description">
+            Learn techniques to read faster while maintaining comprehension.
+          </p>
+          <div class="resource-meta">
+            <span>28 min</span>
+            <span>5.2k views</span>
+          </div>
+          <a href="#" class="resource-link">Watch →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Grid -->
+  <div class="resources-grid">
+
+    <div class="resource-card resource-item" data-type="article">
+      <div class="resource-icon">📝</div>
+      <h3 class="resource-title">Build Vocabulary Daily</h3>
+      <p class="resource-excerpt">Simple ways to improve your vocabulary.</p>
+      <div class="resource-footer">
+        <span>8 min</span>
+        <div>
+          <button class="bookmark-btn">🔖</button>
+          <a href="#" class="read-btn">Read</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="resource-card resource-item" data-type="video">
+      <div class="resource-icon">🎬</div>
+      <h3 class="resource-title">Advanced Reading Techniques</h3>
+      <p class="resource-excerpt">Strategies used by top students.</p>
+      <div class="resource-footer">
+        <span>22 min</span>
+        <div>
+          <button class="bookmark-btn">🔖</button>
+          <a href="#" class="read-btn">Watch</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="resource-card resource-item" data-type="exercise">
+      <div class="resource-icon">✏️</div>
+      <h3 class="resource-title">Reading Practice</h3>
+      <p class="resource-excerpt">Improve comprehension with exercises.</p>
+      <div class="resource-footer">
+        <span>15 min</span>
+        <div>
+          <button class="bookmark-btn">🔖</button>
+          <a href="#" class="read-btn">Start</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CTA -->
+  <div class="resources-cta">
+    <h2>Ready to Practice?</h2>
+    <p>Start simplifying texts and track your progress.</p>
+    <a href="{{ url_for('practice') }}" class="cta-button">Start Practicing →</a>
+  </div>
+
+</div>
+
+<style>
+
+.resources-container {
+  max-width: 1300px;
+  margin: auto;
+  padding: 2rem;
+}
+
+/* HERO */
+.resources-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hero-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: white;
+}
+
+.hero-subtitle {
+  color: rgba(255,255,255,0.85);
+  margin-top: 0.5rem;
+}
+
+/* FILTER */
+.category-filter {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.filter-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  background: white;
+  color: #6366f1;
+}
+
+/* FEATURED */
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.featured-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+.featured-card:hover {
+  transform: translateY(-6px);
+}
+
+.featured-image {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gradient-1 {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.gradient-2 {
+  background: linear-gradient(135deg, #ec4899, #ef4444);
+}
+
+.featured-icon {
+  font-size: 3rem;
+}
+
+.featured-content {
+  padding: 1.5rem;
+}
+
+/* BADGES */
+.badge {
+  background: #e0e7ff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+/* GRID */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.resource-card {
+  background: white;
+  border-radius: 14px;
+  padding: 1.2rem;
+  transition: 0.3s;
+}
+
+.resource-card:hover {
+  transform: translateY(-4px);
+}
+
+.resource-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+/* FOOTER */
+.resource-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.read-btn {
+  background: #6366f1;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+/* CTA */
+.resources-cta {
+  margin-top: 3rem;
+  background: white;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 16px;
+}
+
+.cta-button {
+  margin-top: 1rem;
+  display: inline-block;
+  background: #6366f1;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  text-decoration: none;
+}
+
+</style>
+
+{% endblock %}

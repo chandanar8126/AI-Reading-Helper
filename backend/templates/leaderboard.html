@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="leaderboard-container">
+
+  <!-- HEADER -->
+  <div class="leaderboard-header">
+    <h1>Global Leaderboard</h1>
+    <p>Track top readers and compete with the best</p>
+  </div>
+
+  <!-- TABLE -->
+  <div class="leaderboard-table">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th>Points</th>
+          <th>Texts</th>
+          <th>Streak</th>
+          <th>Trend</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for user in top_users %}
+        <tr class="{% if current_user and user.username == current_user.username %}highlight-row{% endif %}">
+          
+          <!-- Rank -->
+          <td class="rank">
+            {% if loop.index == 1 %}1
+            {% elif loop.index == 2 %}2
+            {% elif loop.index == 3 %}3
+            {% else %}{{ loop.index }}{% endif %}
+          </td>
+
+          <!-- User -->
+          <td class="user-cell">
+            <div class="avatar">
+              {{ user.full_name[0].upper() }}
+            </div>
+            <div>
+              <div class="name">{{ user.full_name }}</div>
+              <div class="username">@{{ user.username }}</div>
+            </div>
+          </td>
+
+          <!-- Points -->
+          <td class="points">{{ user.points }}</td>
+
+          <!-- Texts -->
+          <td>{{ user.total_texts_simplified }}</td>
+
+          <!-- Streak -->
+          <td>{{ user.streak_days }}</td>
+
+          <!-- Trend (SAFE VERSION) -->
+          <td class="trend">
+            {% if loop.index <= 3 %}
+              <span class="up">↑ +{{ loop.index * 7 }}</span>
+            {% else %}
+              <span class="down">↓ {{ loop.index }}</span>
+            {% endif %}
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  {% if not current_user %}
+  <div class="cta">
+    <h3>Start your journey</h3>
+    <p>Join and climb the leaderboard</p>
+    <a href="{{ url_for('signup') }}">Sign Up</a>
+  </div>
+  {% endif %}
+
+</div>
+
+<style>
+
+/* BACKGROUND */
+body {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
+}
+
+/* CONTAINER */
+.leaderboard-container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 2rem;
+}
+
+/* HEADER */
+.leaderboard-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.leaderboard-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.leaderboard-header p {
+  color: #94a3b8;
+}
+
+/* TABLE */
+.leaderboard-table {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: rgba(255,255,255,0.1);
+}
+
+th, td {
+  padding: 1rem;
+  text-align: left;
+}
+
+tbody tr {
+  transition: 0.3s;
+}
+
+tbody tr:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+/* USER CELL */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.username {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* POINTS */
+.points {
+  font-weight: bold;
+  color: #a5b4fc;
+}
+
+/* TREND */
+.trend .up {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.trend .down {
+  color: #ef4444;
+}
+
+/* CURRENT USER */
+.highlight-row {
+  background: rgba(99,102,241,0.2);
+  border-left: 4px solid #6366f1;
+}
+
+/* CTA */
+.cta {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.cta a {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.8rem 2rem;
+  background: #6366f1;
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.cta a:hover {
+  background: #4f46e5;
+}
+
+</style>
+
+{% endblock %}

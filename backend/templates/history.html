@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="content">
+  <div class="history-container">
+
+    <!-- Header -->
+    <div class="history-header">
+      <h2>History</h2>
+      {% if history %}
+      <a href="{{ url_for('clear_history') }}" class="btn-danger">Clear All</a>
+      {% endif %}
+    </div>
+
+    {% if history %}
+    <div class="history-list">
+
+      {% for h in history %}
+      <div class="history-card">
+
+        <!-- Meta -->
+        <div class="history-meta">
+          <span>
+            {{ h.created_at if h.created_at else h.timestamp }}
+          </span>
+          <span>ID: {{ h.id }}</span>
+        </div>
+
+        <!-- Original -->
+        <div class="text-block">
+          <div class="label">Original</div>
+          <pre>
+{{ h.original_text if h.original_text else h.original }}
+          </pre>
+        </div>
+
+        <!-- Simplified -->
+        <div class="text-block">
+          <div class="label">Simplified</div>
+          <pre class="highlight">
+{{ h.simplified_text if h.simplified_text else h.simplified }}
+          </pre>
+        </div>
+
+      </div>
+      {% endfor %}
+
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <p>No history yet.</p>
+      <span>Start simplifying text to see results here.</span>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<style>
+
+.content {
+  padding: 2rem;
+}
+
+/* Container */
+.history-container {
+  max-width: 900px;
+  margin: auto;
+}
+
+/* Header */
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.history-header h2 {
+  font-size: 1.8rem;
+}
+
+/* Button */
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* List */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Card */
+.history-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: 0.2s;
+}
+
+.history-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Meta */
+.history-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+/* Text blocks */
+.text-block {
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+/* Text display */
+pre {
+  background: #f8fafc;
+  padding: 0.8rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+}
+
+/* Highlight simplified */
+.highlight {
+  background: #eef2ff;
+  border-left: 3px solid #6366f1;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+}
+
+</style>
+
+{% endblock %}

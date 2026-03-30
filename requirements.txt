@@ -1,0 +1,29 @@
+# Flask and Web Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Image Processing and OCR
+Pillow==12.0.0
+pytesseract==0.3.10
+
+# Text Processing and NLP
+transformers==4.35.2
+torch==2.9.0
+nltk==3.8.1
+textstat==0.7.3
+
+# Text-to-Speech
+gTTS==2.4.0
+
+# Computer Vision (Eye Tracking)
+opencv-python==4.8.1.78
+
+# Database
+# SQLite3 is built-in with Python
+
+# Additional utilities
+python-dotenv==1.0.0
+
+# Optional: For better performance
+sentencepiece==0.2.1
+accelerate==0.25.0

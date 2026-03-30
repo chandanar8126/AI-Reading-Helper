@@ -1,0 +1,687 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="profile-container">
+  
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="profile-cover"></div>
+    <div class="profile-info">
+      <div class="avatar-section">
+        <div class="avatar">
+          {{ current_user.full_name[0].upper() }}
+        </div>
+        <button class="edit-avatar-btn">📷</button>
+      </div>
+      
+      <div class="user-details">
+        <h1 class="user-name">{{ current_user.full_name }}</h1>
+        <p class="user-username">@{{ current_user.username }}</p>
+        <p class="user-bio">{{ current_user.bio or "Reading enthusiast on a journey to master comprehension!" }}</p>
+        
+        <div class="user-stats-inline">
+          <div class="stat-inline">
+            <span class="stat-value">{{ current_user.total_texts_simplified }}</span>
+            <span class="stat-label">Texts</span>
+          </div>
+          <div class="stat-inline">
+            <span class="stat-value">{{ current_user.points }}</span>
+            <span class="stat-label">Points</span>
+          </div>
+          <div class="stat-inline">
+            <span class="stat-value">{{ current_user.streak_days }}</span>
+            <span class="stat-label">Streak</span>
+          </div>
+        </div>
+        
+        <a href="{{ url_for('edit_profile') }}" class="edit-profile-btn">✏️ Edit Profile</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="profile-grid">
+    
+    <!-- Left Column: Stats & Achievements -->
+    <div class="profile-main">
+      
+      <!-- Reading Statistics -->
+      <div class="card stats-card">
+        <h3 class="card-title">📊 Reading Statistics</h3>
+        <div class="stats-grid-profile">
+          <div class="stat-item-profile">
+            <div class="stat-icon-profile">📚</div>
+            <div class="stat-content-profile">
+              <div class="stat-number">{{ current_user.total_texts_simplified }}</div>
+              <div class="stat-description">Total Texts Read</div>
+            </div>
+          </div>
+          
+          <div class="stat-item-profile">
+            <div class="stat-icon-profile">📖</div>
+            <div class="stat-content-profile">
+              <div class="stat-number">{{ total_words }}</div>
+              <div class="stat-description">Words Read</div>
+            </div>
+          </div>
+          
+          <div class="stat-item-profile">
+            <div class="stat-icon-profile">⏱️</div>
+            <div class="stat-content-profile">
+              <div class="stat-number">{{ (current_user.total_reading_time / 60)|round|int }} hrs</div>
+              <div class="stat-description">Reading Time</div>
+            </div>
+          </div>
+          
+          <div class="stat-item-profile">
+            <div class="stat-icon-profile">🎯</div>
+            <div class="stat-content-profile">
+              <div class="stat-number">{{ avg_difficulty }}</div>
+              <div class="stat-description">Avg Difficulty</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements Section -->
+      <div class="card achievements-card">
+        <h3 class="card-title">🏆 Achievements</h3>
+        <div class="achievements-grid">
+          {% for achievement in achievements %}
+          <div class="achievement-item {% if achievement.unlocked_at %}unlocked{% else %}locked{% endif %}">
+            <div class="achievement-icon">{{ achievement.icon }}</div>
+            <div class="achievement-content">
+              <div class="achievement-name">{{ achievement.name }}</div>
+              <div class="achievement-desc">{{ achievement.description }}</div>
+              {% if achievement.unlocked_at %}
+              <div class="achievement-date">Unlocked: {{ achievement.unlocked_at[:10] }}</div>
+              {% else %}
+              <div class="achievement-points">{{ achievement.points }} points</div>
+              {% endif %}
+            </div>
+            {% if achievement.unlocked_at %}
+            <div class="unlock-badge">✓</div>
+            {% else %}
+            <div class="lock-icon">🔒</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Activity Timeline -->
+      <div class="card timeline-card">
+        <h3 class="card-title">📅 Recent Activity</h3>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-marker">🎯</div>
+            <div class="timeline-content">
+              <div class="timeline-title">Completed 10 texts this week</div>
+              <div class="timeline-time">2 hours ago</div>
+            </div>
+          </div>
+          
+          <div class="timeline-item">
+            <div class="timeline-marker">🏆</div>
+            <div class="timeline-content">
+              <div class="timeline-title">Unlocked "Speed Reader" achievement</div>
+              <div class="timeline-time">1 day ago</div>
+            </div>
+          </div>
+          
+          <div class="timeline-item">
+            <div class="timeline-marker">🔥</div>
+            <div class="timeline-content">
+              <div class="timeline-title">7-day reading streak!</div>
+              <div class="timeline-time">3 days ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Progress & Settings -->
+    <div class="profile-sidebar">
+      
+      <!-- Reading Level Progress -->
+      <div class="card level-card">
+        <h3 class="card-title">📈 Level Progress</h3>
+        <div class="level-progress">
+          <div class="level-circle">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="54" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+              <circle cx="60" cy="60" r="54" fill="none" stroke="#6366f1" stroke-width="8" 
+                      stroke-dasharray="339" stroke-dashoffset="100" stroke-linecap="round"
+                      transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="level-text">
+              <div class="level-number">{{ (current_user.points / 100)|round|int }}</div>
+              <div class="level-label">Level</div>
+            </div>
+          </div>
+          <p class="level-description">
+            <strong>{{ 100 - (current_user.points % 100) }}</strong> points to next level
+          </p>
+        </div>
+      </div>
+
+      <!-- Preferred Settings -->
+      <div class="card settings-card">
+        <h3 class="card-title">⚙️ Preferences</h3>
+        <div class="settings-list">
+          <div class="setting-item">
+            <div class="setting-label">Default Reading Level</div>
+            <div class="setting-value">{{ current_user.reading_level|capitalize }}</div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-label">Member Since</div>
+            <div class="setting-value">{{ current_user.created_at[:10] }}</div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-label">Last Active</div>
+            <div class="setting-value">{{ current_user.last_login[:10] if current_user.last_login else 'Today' }}</div>
+          </div>
+        </div>
+        <a href="{{ url_for('edit_profile') }}" class="settings-btn">Manage Settings →</a>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card actions-card">
+        <h3 class="card-title">⚡ Quick Actions</h3>
+        <div class="action-list">
+          <a href="{{ url_for('practice') }}" class="action-item">
+            <span class="action-icon">✨</span>
+            <span>Simplify Text</span>
+          </a>
+          <a href="{{ url_for('history') }}" class="action-item">
+            <span class="action-icon">📜</span>
+            <span>View History</span>
+          </a>
+          <a href="{{ url_for('resources') }}" class="action-item">
+            <span class="action-icon">📚</span>
+            <span>Learning Hub</span>
+          </a>
+          <a href="{{ url_for('leaderboard') }}" class="action-item">
+            <span class="action-icon">🏆</span>
+            <span>Leaderboard</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.profile-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.profile-header {
+  position: relative;
+  margin-bottom: 3rem;
+}
+
+.profile-cover {
+  height: 250px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0 0 24px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-cover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="%23ffffff"/><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="%23ffffff"/><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%23ffffff"/></svg>') no-repeat bottom;
+  background-size: cover;
+  opacity: 0.3;
+}
+
+.profile-info {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  gap: 2rem;
+  align-items: flex-end;
+  position: relative;
+  margin-top: -80px;
+}
+
+.avatar-section {
+  position: relative;
+}
+
+.avatar {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: 6px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.edit-avatar-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #6366f1;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
+}
+
+.edit-avatar-btn:hover {
+  transform: scale(1.1);
+}
+
+.user-details {
+  flex: 1;
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.user-name {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.user-username {
+  font-size: 1.2rem;
+  color: #6366f1;
+  margin-bottom: 1rem;
+}
+
+.user-bio {
+  font-size: 1.05rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.user-stats-inline {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-inline .stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #6366f1;
+  line-height: 1;
+}
+
+.stat-inline .stat-label {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.edit-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+}
+
+.edit-profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99,102,241,0.4);
+}
+
+.profile-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.stats-grid-profile {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.stat-item-profile {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.stat-icon-profile {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.stat-content-profile {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stat-description {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.achievements-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.achievement-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.achievement-item.unlocked {
+  background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+  border: 2px solid #6366f1;
+}
+
+.achievement-item.locked {
+  opacity: 0.5;
+}
+
+.achievement-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.achievement-content {
+  flex: 1;
+}
+
+.achievement-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.achievement-desc {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.achievement-date {
+  font-size: 0.85rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.achievement-points {
+  font-size: 0.85rem;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.unlock-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.lock-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  opacity: 0.3;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1rem;
+  padding-left: 1rem;
+  border-left: 3px solid #e2e8f0;
+  position: relative;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -1.2rem;
+  width: 32px;
+  height: 32px;
+  background: white;
+  border: 3px solid #6366f1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.timeline-title {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-time {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.level-circle {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 1.5rem;
+  position: relative;
+}
+
+.level-circle svg {
+  width: 100%;
+  height: 100%;
+}
+
+.level-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.level-number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #6366f1;
+  line-height: 1;
+}
+
+.level-label {
+  font-size: 1rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.level-description {
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.setting-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.setting-value {
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.settings-btn {
+  display: block;
+  text-align: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  color: #6366f1;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.settings-btn:hover {
+  background: #6366f1;
+  color: white;
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #1e293b;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.action-item:hover {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  transform: translateX(4px);
+}
+
+.action-icon {
+  font-size: 1.3rem;
+}
+
+@media (max-width: 1024px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .stats-grid-profile {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+{% endblock %}

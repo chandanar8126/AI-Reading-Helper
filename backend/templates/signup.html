@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="signup-section">
+  <div class="signup-container">
+    <!-- Left Side - Branding -->
+    <div class="signup-brand">
+      <div class="brand-content">
+        <div class="brand-logo">
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="16" fill="white" fill-opacity="0.1"/>
+            <path d="M20 28H44M20 36H38" stroke="white" stroke-width="3" stroke-linecap="round"/>
+            <path d="M32 16V48" stroke="white" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1 class="brand-title">Join AI Reading Helper</h1>
+        <p class="brand-description">
+          Create your free account and start simplifying complex texts in seconds. 
+          Join thousands of users improving their reading experience.
+        </p>
+        
+        <div class="brand-features">
+          <div class="brand-feature">
+            <svg class="feature-check" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="white" fill-opacity="0.2"/>
+              <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>No credit card required</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side - Signup Form -->
+    <div class="signup-form-wrapper">
+      <div class="signup-form-container">
+        <div class="form-header">
+          <h2 class="form-title">Create Account</h2>
+          <p class="form-subtitle">Get started with your free account</p>
+        </div>
+
+        <!-- Social Signup -->
+        <div class="social-signup">
+          <button type="button" class="social-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M18 10c0-4.4-3.6-8-8-8s-8 3.6-8 8c0 4 2.9 7.3 6.7 7.9v-5.6H6.9V10h1.8V8.3c0-1.8 1.1-2.8 2.7-2.8.8 0 1.6.1 1.6.1v1.8h-.9c-.9 0-1.1.5-1.1 1.1V10h2l-.3 2.3h-1.6v5.6c3.8-.6 6.7-3.9 6.7-7.9z" fill="#1877F2"/>
+            </svg>
+            Continue with Facebook
+          </button>
+          <button type="button" class="social-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M18.2 8.4H10v3.5h4.7c-.4 2-2 3.5-4.2 3.5-2.6 0-4.7-2.1-4.7-4.7s2.1-4.7 4.7-4.7c1.2 0 2.3.4 3.1 1.2l2.6-2.6C14.6 3.2 12.4 2.3 10 2.3c-4.2 0-7.7 3.4-7.7 7.7s3.4 7.7 7.7 7.7c4.4 0 7.4-3.1 7.4-7.5 0-.5 0-1-.1-1.5z" fill="#4285F4"/>
+              <path d="M3.5 6.4l3 2.2c.6-1.9 2.3-3.2 4.3-3.2 1.2 0 2.3.4 3.1 1.2l2.6-2.6C14.6 3.2 12.4 2.3 10 2.3 6.9 2.3 4.2 4.1 3.5 6.4z" fill="#EA4335"/>
+              <path d="M10 17.7c2.4 0 4.5-.8 6-2.2l-2.8-2.3c-.8.6-1.9.9-3.1.9-2.2 0-4.1-1.5-4.7-3.5l-2.9 2.2c1.4 2.8 4.2 4.9 7.5 4.9z" fill="#34A853"/>
+              <path d="M18.2 8.4H10v3.5h4.7c-.2 1-.8 1.9-1.6 2.5l2.8 2.3c1.5-1.4 2.4-3.5 2.4-6 0-.5 0-1-.1-1.5z" fill="#FBBC05"/>
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        <div class="divider">
+          <span>or sign up with email</span>
+        </div>
+
+        <!-- Signup Form -->
+        <form method="POST" action="{{ url_for('signup') }}" class="signup-form">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="password-input">
+              <input type="password" id="password" name="password" placeholder="Create a password" required minlength="8">
+              <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"/>
+                  <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+            <div class="password-strength">
+              <div class="strength-bar">
+                <div class="strength-progress" id="strength-progress"></div>
+              </div>
+              <span class="strength-text" id="strength-text">Use 8+ characters</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirm_password">Confirm Password</label>
+            <div class="password-input">
+              <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+              <button type="button" class="toggle-password" onclick="togglePassword('confirm_password')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"/>
+                  <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-check">
+            <input type="checkbox" id="terms" name="terms" required>
+            <label for="terms">
+              I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+            </label>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            Create Account
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </form>
+
+        <div class="form-footer">
+          Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Toggle Password Visibility
+function togglePassword(inputId) {
+  const input = document.getElementById(inputId);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// Password Strength Checker
+document.getElementById('password').addEventListener('input', function(e) {
+  const password = e.target.value;
+  const strengthProgress = document.getElementById('strength-progress');
+  const strengthText = document.getElementById('strength-text');
+  
+  let strength = 0;
+  const checks = {
+    length: password.length >= 8,
+    lowercase: /[a-z]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^a-zA-Z0-9]/.test(password)
+  };
+  
+  strength = Object.values(checks).filter(v => v).length;
+  
+  const percentage = (strength / 5) * 100;
+  strengthProgress.style.width = percentage + '%';
+  
+  if (strength <= 2) {
+    strengthProgress.style.background = '#ef4444';
+    strengthText.textContent = 'Weak password';
+    strengthText.style.color = '#ef4444';
+  } else if (strength <= 3) {
+    strengthProgress.style.background = '#f59e0b';
+    strengthText.textContent = 'Medium password';
+    strengthText.style.color = '#f59e0b';
+  } else {
+    strengthProgress.style.background = '#10b981';
+    strengthText.textContent = 'Strong password';
+    strengthText.style.color = '#10b981';
+  }
+});
+
+// Form Validation
+document.querySelector('.signup-form').addEventListener('submit', function(e) {
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirm_password').value;
+  
+  if (password !== confirmPassword) {
+    e.preventDefault();
+    alert('Passwords do not match!');
+    document.getElementById('confirm_password').focus();
+  }
+});
+</script>
+
+<style>
+.signup-section {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.signup-container {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  min-height: 100vh;
+}
+
+/* Left Side - Branding */
+.signup-brand {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  padding: 6rem 4rem;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.signup-brand::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.brand-content {
+  position: relative;
+  z-index: 1;
+}
+
+.brand-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 3rem;
+}
+
+.brand-logo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.brand-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+}
+
+.brand-description {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.7;
+  margin-bottom: 3rem;
+}
+
+.brand-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.brand-feature {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.1rem;
+  color: white;
+}
+
+.feature-check {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* Right Side - Form */
+.signup-form-wrapper {
+  background: white;
+  padding: 4rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.signup-form-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.form-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.form-subtitle {
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+/* Social Signup */
+.social-signup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.social-btn {
+  width: 100%;
+  padding: 1.25rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.social-btn:hover {
+  border-color: #6366f1;
+  background: #f8fafc;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 2rem 0;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.divider span {
+  padding: 0 1rem;
+}
+
+/* Form */
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 1.25rem;
+  font-size: 1.05rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #6366f1;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.password-input {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #94a3b8;
+  transition: color 0.3s ease;
+}
+
+.toggle-password:hover {
+  color: #6366f1;
+}
+
+.password-strength {
+  margin-top: 0.75rem;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.strength-progress {
+  height: 100%;
+  width: 0%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.strength-text {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.form-check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.form-check label {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+  cursor: pointer;
+}
+
+.form-check a {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.form-check a:hover {
+  text-decoration: underline;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+  margin-top: 1rem;
+}
+
+.submit-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4);
+}
+
+.form-footer {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 1.05rem;
+  color: #64748b;
+}
+
+.form-footer a {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .signup-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .signup-brand {
+    padding: 4rem 2rem;
+    min-height: 40vh;
+  }
+  
+  .brand-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .brand-title {
+    font-size: 2rem;
+  }
+  
+  .brand-description {
+    font-size: 1.1rem;
+  }
+  
+  .form-title {
+    font-size: 2rem;
+  }
+}
+</style>
+{% endblock %} cy="12" r="10" fill="white" fill-opacity="0.2"/>
+              <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Unlimited text simplification</span>
+          </div>
+          <div class="brand-feature">
+            <svg class="feature-check" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="white" fill-opacity="0.2"/>
+              <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Advanced AI technology</span>
+          </div>
+          <div class="brand-feature">
+            <svg class="feature-check" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="white" fill-opacity="0.2"/>
+              <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Save your reading history</span>
+          </div>
+          <div class="brand-feature">
+            <svg class="feature-check" viewBox="0 0 24 24" fill="none">
+              <circle cx="12"

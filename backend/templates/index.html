@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content">
+  <div class="card form-card">
+    <h2>Simplify Text or Upload an Image</h2>
+
+    <form id="simplifyForm" action="{{ url_for('process') }}" method="post" enctype="multipart/form-data">
+      <label class="field">Paste text</label>
+      <textarea name="text_input" id="text_input" placeholder="Paste or type text..."></textarea>
+
+      <label class="field">Or upload image</label>
+      <input type="file" name="image" accept="image/*">
+
+      <div class="controls">
+        <label for="level">Reading level</label>
+        <select name="level" id="level">
+          <option value="basic">Basic</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+        <button type="submit" class="btn-primary">Simplify</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

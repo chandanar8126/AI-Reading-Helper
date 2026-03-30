@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="practice-section">
+  <div style="text-align: center; margin-bottom: 3rem;">
+    <h2 style="color: white; font-size: 2.5rem; margin-bottom: 1rem;">
+      Reading Practice
+    </h2>
+    <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.2rem; max-width: 600px; margin: 0 auto;">
+      Transform complex text into easy-to-understand content
+    </p>
+  </div>
+
+  <div class="form-box" style="max-width: 800px; margin: 0 auto;">
+    <form action="{{ url_for('process') }}" method="POST" enctype="multipart/form-data">
+      
+      <!-- Instruction Hint -->
+      <div style="background: #eef2ff; border-left: 4px solid #6366f1; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px;">
+        Double-click any word in the result to view its synonyms.
+      </div>
+
+      <!-- Input Tabs -->
+      <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--gray-200);">
+        <button type="button" class="tab-btn active" data-tab="text" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">
+          Text Input
+        </button>
+        <button type="button" class="tab-btn" data-tab="image" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 3px solid transparent; color: var(--gray-600); font-weight: 600; cursor: pointer;">
+          Image Upload
+        </button>
+      </div>
+
+      <!-- Text Input Tab -->
+      <div class="tab-content" id="text-tab">
+        <label for="text_input" class="field">Enter or paste your text</label>
+        <textarea id="text_input" name="text_input" rows="8" placeholder="Paste your text here..."></textarea>
+      </div>
+
+      <!-- Image Upload Tab -->
+      <div class="tab-content" id="image-tab" style="display: none;">
+        <label for="image" class="field">Upload an image with text</label>
+        <div id="drop-zone" style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 3rem 2rem; text-align: center; cursor: pointer;">
+          <p>Drag & drop your image here or click to browse</p>
+          <input type="file" name="image" id="image" accept="image/*" style="display: none;">
+        </div>
+      </div>
+
+      <!-- Reading Level -->
+      <div style="margin-top: 2rem;">
+        <label class="field">Select Reading Level</label>
+        <div style="display: flex; gap: 1rem;">
+          <label><input type="radio" name="level" value="basic" checked> Basic</label>
+          <label><input type="radio" name="level" value="intermediate"> Intermediate</label>
+          <label><input type="radio" name="level" value="advanced"> Advanced</label>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div style="text-align: center; margin-top: 2rem;">
+        <button type="submit" class="btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem;">
+          Simplify Text
+        </button>
+      </div>
+
+    </form>
+  </div>
+</section>
+
+<script>
+// Tab Switching
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.style.borderBottomColor = 'transparent';
+      b.style.color = 'var(--gray-600)';
+    });
+
+    this.classList.add('active');
+    this.style.borderBottomColor = 'var(--primary)';
+    this.style.color = 'var(--primary)';
+
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.style.display = 'none';
+    });
+
+    document.getElementById(this.dataset.tab + '-tab').style.display = 'block';
+  });
+});
+</script>
+
+{% endblock %}
