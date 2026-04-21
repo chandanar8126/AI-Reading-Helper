@@ -83,6 +83,9 @@ Evaluates text using:
 
 ```bash
 pip install -r requirements.txt
+
+cd backend
+
 python app.py
 ```
 ## Future Improvements
