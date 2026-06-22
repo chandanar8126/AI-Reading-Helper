@@ -5,10 +5,10 @@ from PIL import Image
 from functools import wraps
 
 # Import all our modules
-from ocr_module import extract_text
-from simplify_module import simplify_text, get_text_statistics
-from tts_module import generate_tts
-from eyetracking_module import log_difficulty_event
+from modules.ocr_module import extract_text
+from modules.simplify_module import simplify_text, get_text_statistics
+from modules.tts_module import generate_tts
+from modules.eyetracking_module import log_difficulty_event
 from database import (
     init_db, create_user, verify_user, get_user_by_id, update_last_login,
     add_reading_history, get_user_history, get_random_motivation,
