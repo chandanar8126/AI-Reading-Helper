@@ -1,16 +1,27 @@
-# Python
-__pycache__/
-*.pyc
+# Database
+*.db
 
-# Virtual environment
-venv/
-env/
-
-# Large files
-*.whl
+# Generated audio
+*.mp3
 
 # Logs
-logs/
+logs/difficulty_events.txt
 
-# OS files
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Uploads
+backend/static/uploads/*
+!backend/static/uploads/.gitkeep
+
+# Environment
+.env
+
+# OS
 .DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
