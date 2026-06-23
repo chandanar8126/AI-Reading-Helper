@@ -1,188 +1,162 @@
 """
 Dyslexia Friendly AI Text Simplification System
-Advanced Version
-Author: Chandana Project
+Author: Chandana R
 """
 
 import re
 import nltk
-import pyttsx3
-from transformers import pipeline
 from textstat import flesch_reading_ease, flesch_kincaid_grade
 
-# download tokenizer
-nltk.download('punkt')
+nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
 
 # ----------------------------
-# TEXT TO SPEECH
+# LAZY MODEL LOADING
+# Why: Loading transformers at startup crashes if torchvision
+# has a version conflict. Lazy loading means the model only
+# loads when the first simplification request comes in.
 # ----------------------------
 
-engine = pyttsx3.init()
+_simplifier = None
 
-def speak_text(text):
-    print("\n🔊 Reading text aloud...\n")
-    engine.say(text)
-    engine.runAndWait()
-
-
-# ----------------------------
-# LOAD AI MODEL
-# ----------------------------
-
-def load_simplifier():
-
-    models = [
-        "google/flan-t5-base",
-        "t5-base",
-        "t5-small"
-    ]
-
-    for model in models:
-        try:
-            print(f"Loading model: {model}")
-            return pipeline(
-                "text2text-generation",
-                model=model,
-                max_length=256,
-                truncation=True
-            )
-        except:
-            pass
-
+def get_simplifier():
+    global _simplifier
+    if _simplifier is not None:
+        return _simplifier
+    try:
+        from transformers import pipeline
+        models = ["google/flan-t5-base", "t5-base", "t5-small"]
+        for model in models:
+            try:
+                print(f"Loading model: {model}")
+                _simplifier = pipeline(
+                    "text2text-generation",
+                    model=model,
+                    max_length=256,
+                    truncation=True
+                )
+                print(f"Model loaded: {model}")
+                return _simplifier
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"Could not load AI model: {e}")
     return None
 
 
-simplifier = load_simplifier()
-
-
 # ----------------------------
-# DYSLEXIA WORD DATASET
+# DYSLEXIA WORD DICTIONARY
+# Why: Some words are hard for dyslexic readers.
+# We replace them with simpler alternatives.
 # ----------------------------
 
 replacements = {
-
-    # common academic words
-    "utilize": "use",
-    "facilitate": "help",
-    "demonstrate": "show",
-    "subsequent": "next",
-    "commence": "start",
-    "terminate": "end",
-    "numerous": "many",
-    "possess": "have",
-    "purchase": "buy",
-    "require": "need",
-    "regarding": "about",
-    "therefore": "so",
-    "furthermore": "also",
-    "moreover": "also",
-    "consequently": "so",
-    "approximately": "about",
-    "assistance": "help",
-    "beneficial": "helpful",
-    "comprehend": "understand",
-    "construct": "build",
-    "determine": "find",
-    "efficient": "fast",
-    "fundamental": "basic",
-    "identify": "find",
-    "indicate": "show",
-    "maintain": "keep",
-    "obtain": "get",
-    "participate": "take part",
-    "significant": "important",
-    "sufficient": "enough",
-    "transform": "change",
-
-    # science words
+    # Academic
+    "utilize": "use", "facilitate": "help", "demonstrate": "show",
+    "subsequent": "next", "commence": "start", "terminate": "end",
+    "numerous": "many", "possess": "have", "purchase": "buy",
+    "require": "need", "regarding": "about", "therefore": "so",
+    "furthermore": "also", "moreover": "also", "consequently": "so",
+    "approximately": "about", "assistance": "help", "beneficial": "helpful",
+    "comprehend": "understand", "construct": "build", "determine": "find",
+    "efficient": "fast", "fundamental": "basic", "identify": "find",
+    "indicate": "show", "maintain": "keep", "obtain": "get",
+    "participate": "take part", "significant": "important",
+    "sufficient": "enough", "transform": "change",
+    "implement": "use", "establish": "set up", "individuals": "people",
+    "components": "parts", "additional": "more", "however": "but",
+    "although": "even though", "necessary": "needed", "previous": "last",
+    "currently": "now", "specifically": "exactly", "generally": "usually",
+    # Science
     "photosynthesis": "how plants make food",
     "evaporation": "water turning into vapor",
     "precipitation": "rain or snow",
     "respiration": "breathing process",
-
-    # tech words
+    "mitochondria": "energy maker in cells",
+    "hypothesis": "educated guess",
+    "organism": "living thing",
+    "environment": "surroundings",
+    # Tech
     "algorithm": "step by step method",
     "artificial intelligence": "smart computer system",
     "autonomous": "self driving",
-    "computational": "computer based"
+    "computational": "computer based",
+    "database": "organized data storage",
+    "interface": "screen or display",
+    "parameter": "setting or value",
+    # Medical
+    "diagnosis": "finding out what illness",
+    "symptom": "sign of illness",
+    "medication": "medicine",
+    "physician": "doctor",
+    "chronic": "long lasting",
+    "acute": "sudden and severe",
 }
 
 
 # ----------------------------
-# READABILITY ANALYSIS
+# READABILITY SCORING
+# Why: Flesch Reading Ease tells us how hard text is to read.
+# Higher score = easier. Below 30 = very hard, above 60 = easy.
 # ----------------------------
 
 def calculate_readability(text):
-
     try:
-
         flesch = flesch_reading_ease(text)
         grade = flesch_kincaid_grade(text)
-
-        difficulty = "Easy"
-
         if flesch < 30:
             difficulty = "Hard"
-
         elif flesch < 60:
             difficulty = "Medium"
-
+        else:
+            difficulty = "Easy"
         return {
-            "flesch_score": round(flesch,2),
-            "grade_level": round(grade,2),
+            "flesch_score": round(flesch, 2),
+            "grade_level": round(grade, 2),
             "difficulty": difficulty
         }
-
-    except:
-
-        return {
-            "flesch_score":50,
-            "grade_level":8,
-            "difficulty":"Medium"
-        }
+    except Exception:
+        return {"flesch_score": 50, "grade_level": 8, "difficulty": "Medium"}
 
 
 # ----------------------------
-# WORD SIMPLIFICATION
+# WORD REPLACEMENT
 # ----------------------------
 
 def replace_complex_words(text):
-
     for complex_word, simple_word in replacements.items():
-
-        pattern = r"\b" + complex_word + r"\b"
-
+        pattern = r"\b" + re.escape(complex_word) + r"\b"
         text = re.sub(pattern, simple_word, text, flags=re.IGNORECASE)
-
     return text
 
 
 # ----------------------------
-# SHORT SENTENCES
+# SENTENCE SPLITTING
+# Why: Long sentences are hard for dyslexic readers.
+# We use NLTK to split properly instead of cutting at midpoint.
 # ----------------------------
 
-def shorten_sentences(text,max_words=15):
-
-    sentences = text.split(".")
+def shorten_sentences(text, max_words=15):
+    try:
+        from nltk.tokenize import sent_tokenize
+        sentences = sent_tokenize(text)
+    except Exception:
+        sentences = text.split(".")
 
     new_sentences = []
-
     for sentence in sentences:
-
         words = sentence.split()
-
         if len(words) > max_words:
-
-            mid = len(words)//2
-
+            mid = len(words) // 2
             new_sentences.append(" ".join(words[:mid]))
             new_sentences.append(" ".join(words[mid:]))
-
         else:
-
             new_sentences.append(sentence)
 
-    return ". ".join([s.strip() for s in new_sentences if s.strip()])
+    result = ". ".join([s.strip() for s in new_sentences if s.strip()])
+    if result and not result.endswith("."):
+        result += "."
+    return result
 
 
 # ----------------------------
@@ -190,22 +164,13 @@ def shorten_sentences(text,max_words=15):
 # ----------------------------
 
 def rule_based_simplify(text):
-
     text = replace_complex_words(text)
-
     text = shorten_sentences(text)
-
-    text = re.sub(r"\s+"," ",text)
-
-    sentences = text.split(".")
-
-    sentences = [s.capitalize().strip() for s in sentences if s.strip()]
-
+    text = re.sub(r"\s+", " ", text)
+    sentences = [s.capitalize().strip() for s in text.split(".") if s.strip()]
     result = ". ".join(sentences)
-
     if not result.endswith("."):
         result += "."
-
     return result
 
 
@@ -213,152 +178,77 @@ def rule_based_simplify(text):
 # AI SIMPLIFICATION
 # ----------------------------
 
-def ai_simplify(text):
-
+def ai_simplify(prompt_text):
+    simplifier = get_simplifier()
     if not simplifier:
         return None
-
     try:
-
-        prompt = f"Simplify this text for a student with dyslexia: {text}"
-
         result = simplifier(
-            prompt,
+            prompt_text,
             max_length=200,
             min_length=40,
             do_sample=False
         )
-
         simplified = result[0]["generated_text"]
-
-        if simplified.lower().strip() != text.lower().strip():
+        if simplified.lower().strip() != prompt_text.lower().strip():
             return simplified
-
-    except:
-
+    except Exception:
         pass
-
     return None
 
 
 # ----------------------------
-# MAIN SIMPLIFICATION
+# MAIN SIMPLIFICATION FUNCTION
 # ----------------------------
 
 def simplify_text(text, level='basic'):
-
     level = (level or 'basic').lower().strip()
     if level not in ['basic', 'intermediate', 'advanced']:
         level = 'basic'
 
     if len(text) < 10:
-        return "Text too short."
+        return "Text too short to simplify."
 
-    print("\n📊 Checking readability...")
-
-    original_stats = calculate_readability(text)
-
-    print("Original Stats:", original_stats)
-
-    # Level-specific AI prompt guidance
-    prompt_text = text
     if level == 'basic':
-        prompt_text = f"Simplify this text for a student with dyslexia using short sentences and simple words: {text}"
+        prompt = f"Simplify this text for a student with dyslexia using short sentences and simple words: {text}"
     elif level == 'intermediate':
-        prompt_text = f"Simplify this text for a student with dyslexia while keeping moderate complexity: {text}"
+        prompt = f"Simplify this text for a student with dyslexia while keeping moderate complexity: {text}"
     else:
-        prompt_text = f"Simplify complicated words and structure in this text, preserving details for an advanced reader with dyslexia: {text}"
+        prompt = f"Simplify complicated words in this text, preserving details for an advanced reader with dyslexia: {text}"
 
-    print(f"\n🤖 Trying AI simplification ({level})...")
-
-    ai_result = ai_simplify(prompt_text)
+    ai_result = ai_simplify(prompt)
 
     if ai_result:
         ai_result = replace_complex_words(ai_result)
-
         if level == 'basic':
             ai_result = shorten_sentences(ai_result, max_words=12)
         elif level == 'intermediate':
             ai_result = shorten_sentences(ai_result, max_words=16)
-        # advanced uses default more verbose sentences
-
-        print("AI Simplification Success")
-
         return ai_result
 
-    print("Using rule based simplification")
-
-    simplified = rule_based_simplify(text)
-
+    # Fallback to rule based
     if level == 'advanced':
-        # less aggressive for advanced level
-        simplified = text
+        return replace_complex_words(text)
     elif level == 'intermediate':
-        simplified = replace_complex_words(text)
-        simplified = shorten_sentences(simplified, max_words=18)
-
-    return simplified
-
-
-# ----------------------------
-# TEXT STATISTICS
-# ----------------------------
-
-def get_statistics(text):
-
-    words = text.split()
-
-    sentences = text.split(".")
-
-    stats = calculate_readability(text)
-
-    return {
-
-        "word_count": len(words),
-
-        "sentence_count": len(sentences),
-
-        "avg_word_length": round(sum(len(w) for w in words)/len(words),2),
-
-        "readability": stats
-    }
+        result = replace_complex_words(text)
+        return shorten_sentences(result, max_words=18)
+    else:
+        return rule_based_simplify(text)
 
 
 # ----------------------------
-# MAIN PROGRAM
+# STATISTICS — single function, no duplicate
 # ----------------------------
-
-if __name__ == "__main__":
-
-    print("\n🧠 Dyslexia Friendly AI Text Simplifier\n")
-
-    text = input("Enter text to simplify:\n\n")
-
-    print("\n--------------------------------")
-
-    simplified = simplify_text(text)
-
-    print("\n📘 Simplified Text:\n")
-
-    print(simplified)
-
-    stats = get_statistics(simplified)
-
-    print("\n📊 Simplified Text Statistics")
-
-    print(stats)
-
-    speak = input("\n🔊 Do you want the text to be read aloud? (y/n): ")
-
-    if speak.lower() == "y":
-        speak_text(simplified)
 
 def get_text_statistics(text):
-    from textstat import flesch_reading_ease, flesch_kincaid_grade
-
+    words = text.split()
+    if not words:
+        return {"word_count": 0, "sentence_count": 0,
+                "flesch_reading_ease": 0, "flesch_kincaid_grade": 0}
+    stats = calculate_readability(text)
     return {
-        "word_count": len(text.split()),
+        "word_count": len(words),
         "sentence_count": text.count(".") + text.count("!") + text.count("?"),
-        "flesch_reading_ease": round(flesch_reading_ease(text), 2),
-        "flesch_kincaid_grade": round(flesch_kincaid_grade(text), 2)
+        "flesch_reading_ease": stats["flesch_score"],
+        "flesch_kincaid_grade": stats["grade_level"]
     }

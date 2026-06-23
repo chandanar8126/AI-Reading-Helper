@@ -142,7 +142,7 @@ def init_db():
     
     conn.commit()
     conn.close()
-    print("✅ Database initialized successfully!")
+    print(" Database initialized successfully!")
 
 def hash_password(password):
     """Hash password using SHA-256"""
@@ -264,7 +264,7 @@ def seed_motivations():
     
     conn.commit()
     conn.close()
-    print("✅ Motivational quotes seeded!")
+    print(" Motivational quotes seeded!")
 
 def seed_achievements():
     """Seed achievements/badges"""
@@ -290,7 +290,7 @@ def seed_achievements():
     
     conn.commit()
     conn.close()
-    print("✅ Achievements seeded!")
+    print("Achievements seeded!")
 
 def get_random_motivation():
     """Get a random motivational quote"""

@@ -32,11 +32,11 @@ def configure_tesseract():
 
                 pytesseract.pytesseract.tesseract_cmd = path
 
-                print(f"✅ Tesseract found at: {path}")
+                print(f" Tesseract found at: {path}")
 
                 return True
 
-        print("❌ Tesseract not found. Install from:")
+        print(" Tesseract not found. Install from:")
         print("https://github.com/UB-Mannheim/tesseract/wiki")
 
         return False

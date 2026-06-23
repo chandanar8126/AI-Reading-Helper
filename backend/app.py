@@ -158,7 +158,7 @@ def process():
     original_text = ""
     stats = None
 
-    # 🖼️ OCR - Using the module now!
+    #  OCR - Using the module now!
     if 'image' in request.files:
         image_file = request.files['image']
         if image_file and image_file.filename:
@@ -167,11 +167,11 @@ def process():
             
             try:
                 image_file.save(image_path)
-                print(f"✅ Image saved to: {image_path}")
+                print(f" Image saved to: {image_path}")
                 
                 # Extract text using OCR
                 original_text = extract_text(image_path)
-                print(f"✅ OCR extracted text: {original_text[:100]}...")
+                print(f" OCR extracted text: {original_text[:100]}...")
                 
                 # Check if OCR returned an error
                 if "ERROR" in original_text or "not installed" in original_text:
@@ -179,39 +179,39 @@ def process():
                     return render_template('practice.html')
                     
             except Exception as e:
-                print(f"❌ Error processing image: {e}")
+                print(f" Error processing image: {e}")
                 flash(f'Error processing image: {str(e)}', 'error')
                 return render_template('practice.html')
 
-    # ✏️ Text Input (prioritize text input over image)
+    #  Text Input (prioritize text input over image)
     if text_input:
         original_text = text_input
-        print(f"✅ Text input received: {original_text[:100]}...")
+        print(f" Text input received: {original_text[:100]}...")
 
-    # ✅ Simplify Text with selected level
+    #  Simplify Text with selected level
     if not original_text.strip():
         flash("Please upload an image or enter text.", 'warning')
         return render_template('practice.html')
     else:
-        print(f"🔄 Simplifying text at {level} level...")
+        print(f" Simplifying text at {level} level...")
         
         # USE ENHANCED SIMPLIFICATION
         simplified_text = simplify_text(original_text, level=level)
         
-        print(f"✅ Simplified text: {simplified_text[:100]}...")
+        print(f" Simplified text: {simplified_text[:100]}...")
         
         # Get text statistics
         stats = get_text_statistics(simplified_text)
 
-    # 🎧 Generate Audio
+    #  Generate Audio
     try:
         audio_path = generate_tts(simplified_text)
-        print(f"✅ Audio generated: {audio_path}")
+        print(f" Audio generated: {audio_path}")
     except Exception as e:
-        print(f"⚠️ Audio generation failed: {e}")
+        print(f" Audio generation failed: {e}")
         audio_path = None
 
-    # 🕐 Save History (only if logged in)
+    #  Save History (only if logged in)
     if 'user_id' in session and original_text.strip():
         words_count = len(original_text.split())
         add_reading_history(
@@ -221,7 +221,7 @@ def process():
             level,
             words_count
         )
-        print(f"✅ History saved for user {session['user_id']}")
+        print(f" History saved for user {session['user_id']}")
         
         # Check and unlock achievements
         check_achievements(session['user_id'])
@@ -242,7 +242,7 @@ def process():
     session['history'] = session['history'][:10]
     session.modified = True
 
-    print("✅ Rendering result page...")
+    print(" Rendering result page...")
     return render_template('result.html',
                          original_text=original_text,
                          simplified_text=simplified_text,
@@ -625,6 +625,6 @@ def internal_error(e):
 
 # --- RUN APP ---
 if __name__ == "__main__":
-    print("🚀 Starting AI Reading Helper...")
-    print("📍 Running on http://localhost:5000")
+    print(" Starting AI Reading Helper...")
+    print(" Running on http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
