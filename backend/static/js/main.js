@@ -9,7 +9,7 @@ function toggleMenu() {
 }
 
 // Add hamburger menu for mobile
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // Create mobile menu button
   const navbar = document.querySelector('.navbar');
   if (navbar && window.innerWidth <= 768) {
@@ -17,33 +17,33 @@ document.addEventListener('DOMContentLoaded', function() {
     hamburger.id = 'hamburger';
     hamburger.innerHTML = '☰';
     hamburger.style.cssText = 'background: none; border: none; font-size: 1.5rem; color: var(--gray-700); cursor: pointer; display: none;';
-    
+
     if (window.innerWidth <= 768) {
       hamburger.style.display = 'block';
       navbar.insertBefore(hamburger, navbar.firstChild);
     }
-    
+
     hamburger.addEventListener('click', toggleMenu);
   }
 
   // Form validation and enhancement
   enhanceForm();
-  
+
   // Add loading states to buttons
   enhanceButtons();
-  
+
   // Character counter for textareas
   addCharacterCounter();
-  
+
   // File upload preview
   enhanceFileUpload();
-  
+
   // Smooth scrolling
   enableSmoothScroll();
-  
+
   // Add word highlighting feature
   addWordHighlight();
-  
+
   // Initialize tooltips
   initTooltips();
 });
@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function enhanceForm() {
   const forms = document.querySelectorAll('form');
   forms.forEach(form => {
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
       const button = form.querySelector('button[type="submit"]');
       if (button) {
         button.disabled = true;
         const originalText = button.textContent;
         button.innerHTML = '<span class="loading"></span> Processing...';
-        
+
         // Re-enable after 5 seconds if still on page
         setTimeout(() => {
           button.disabled = false;
@@ -70,7 +70,7 @@ function enhanceForm() {
     // Real-time validation
     const inputs = form.querySelectorAll('input[required], textarea[required]');
     inputs.forEach(input => {
-      input.addEventListener('blur', function() {
+      input.addEventListener('blur', function () {
         validateInput(this);
       });
     });
@@ -113,10 +113,10 @@ function removeError(input) {
 function enhanceButtons() {
   const buttons = document.querySelectorAll('.btn-primary, .btn-secondary, .btn-danger');
   buttons.forEach(button => {
-    button.addEventListener('mouseenter', function() {
+    button.addEventListener('mouseenter', function () {
       this.style.transform = 'translateY(-3px)';
     });
-    button.addEventListener('mouseleave', function() {
+    button.addEventListener('mouseleave', function () {
       this.style.transform = 'translateY(0)';
     });
   });
@@ -130,19 +130,19 @@ function addCharacterCounter() {
     counter.className = 'char-counter';
     counter.style.cssText = 'text-align: right; color: var(--gray-500); font-size: 0.85rem; margin-top: 0.25rem;';
     textarea.parentNode.appendChild(counter);
-    
+
     function updateCounter() {
       const count = textarea.value.length;
       const maxLength = textarea.getAttribute('maxlength') || 5000;
       counter.textContent = `${count} / ${maxLength} characters`;
-      
+
       if (count > maxLength * 0.9) {
         counter.style.color = 'var(--warning)';
       } else {
         counter.style.color = 'var(--gray-500)';
       }
     }
-    
+
     textarea.addEventListener('input', updateCounter);
     updateCounter();
   });
@@ -152,32 +152,32 @@ function addCharacterCounter() {
 function enhanceFileUpload() {
   const fileInputs = document.querySelectorAll('input[type="file"]');
   fileInputs.forEach(input => {
-    input.addEventListener('change', function(e) {
+    input.addEventListener('change', function (e) {
       const file = e.target.files[0];
       if (file) {
         // Remove previous preview
         const oldPreview = input.parentNode.querySelector('.file-preview');
         if (oldPreview) oldPreview.remove();
-        
+
         // Create preview
         const preview = document.createElement('div');
         preview.className = 'file-preview';
         preview.style.cssText = 'margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 8px; display: flex; align-items: center; gap: 1rem;';
-        
+
         if (file.type.startsWith('image/')) {
           const img = document.createElement('img');
           img.style.cssText = 'max-width: 100px; max-height: 100px; border-radius: 8px; object-fit: cover;';
           img.src = URL.createObjectURL(file);
           preview.appendChild(img);
         }
-        
+
         const info = document.createElement('div');
         info.innerHTML = `
           <div style="font-weight: 600; color: var(--gray-700);">${file.name}</div>
           <div style="font-size: 0.85rem; color: var(--gray-500);">${(file.size / 1024).toFixed(2)} KB</div>
         `;
         preview.appendChild(info);
-        
+
         input.parentNode.appendChild(preview);
       }
     });
@@ -187,7 +187,7 @@ function enhanceFileUpload() {
 // Smooth Scrolling
 function enableSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
+    anchor.addEventListener('click', function (e) {
       const href = this.getAttribute('href');
       if (href !== '#') {
         e.preventDefault();
@@ -204,10 +204,10 @@ function enableSmoothScroll() {
 function addWordHighlight() {
   const resultBoxes = document.querySelectorAll('.result-box p');
   resultBoxes.forEach(box => {
-    box.addEventListener('dblclick', function(e) {
+    box.addEventListener('dblclick', function (e) {
       const selection = window.getSelection();
       const word = selection.toString().trim();
-      
+
       if (word && word.split(' ').length === 1) {
         // Fetch synonyms
         fetchSynonyms(word, e.pageX, e.pageY);
@@ -219,13 +219,26 @@ function addWordHighlight() {
 // Fetch Synonyms
 function fetchSynonyms(word, x, y) {
   fetch(`/synonym?word=${encodeURIComponent(word)}`)
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        return response.text().then(text => {
+          console.error(`Synonym API error ${response.status}:`, text);
+          throw new Error('Synonym API error');
+        });
+      }
+      return response.json();
+    })
     .then(data => {
-      if (data.synonyms && data.synonyms.length > 0) {
+      if (data && data.synonyms && data.synonyms.length > 0) {
         showSynonymPopup(word, data.synonyms, x, y);
+      } else {
+        showSynonymPopup(word, ['No synonyms found'], x, y);
       }
     })
-    .catch(error => console.error('Error fetching synonyms:', error));
+    .catch(error => {
+      console.error('Error fetching synonyms:', error);
+      showSynonymPopup(word, ['Error loading synonyms'], x, y);
+    });
 }
 
 // Show Synonym Popup
@@ -233,7 +246,7 @@ function showSynonymPopup(word, synonyms, x, y) {
   // Remove existing popup
   const existingPopup = document.querySelector('.synonym-popup');
   if (existingPopup) existingPopup.remove();
-  
+
   const popup = document.createElement('div');
   popup.className = 'synonym-popup';
   popup.style.cssText = `
@@ -249,7 +262,7 @@ function showSynonymPopup(word, synonyms, x, y) {
     max-width: 300px;
     animation: fadeInUp 0.3s ease-out;
   `;
-  
+
   popup.innerHTML = `
     <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">
       Synonyms for "${word}"
@@ -282,9 +295,9 @@ function showSynonymPopup(word, synonyms, x, y) {
       color: var(--gray-700);
     ">Close</button>
   `;
-  
+
   document.body.appendChild(popup);
-  
+
   // Auto-close after 10 seconds
   setTimeout(() => popup.remove(), 10000);
 }
@@ -293,7 +306,7 @@ function showSynonymPopup(word, synonyms, x, y) {
 function initTooltips() {
   const elements = document.querySelectorAll('[data-tooltip]');
   elements.forEach(el => {
-    el.addEventListener('mouseenter', function(e) {
+    el.addEventListener('mouseenter', function (e) {
       const tooltip = document.createElement('div');
       tooltip.className = 'tooltip';
       tooltip.textContent = this.getAttribute('data-tooltip');
@@ -308,17 +321,17 @@ function initTooltips() {
         pointer-events: none;
         white-space: nowrap;
       `;
-      
+
       document.body.appendChild(tooltip);
-      
+
       const rect = this.getBoundingClientRect();
       tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
       tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
-      
+
       this._tooltip = tooltip;
     });
-    
-    el.addEventListener('mouseleave', function() {
+
+    el.addEventListener('mouseleave', function () {
       if (this._tooltip) {
         this._tooltip.remove();
         this._tooltip = null;
@@ -340,8 +353,8 @@ function addReadingProgress() {
     transition: width 0.2s ease;
   `;
   document.body.appendChild(progressBar);
-  
-  window.addEventListener('scroll', function() {
+
+  window.addEventListener('scroll', function () {
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight - windowHeight;
     const scrolled = window.scrollY;
@@ -366,13 +379,13 @@ function enhanceAudioControls() {
 enhanceAudioControls();
 
 // Keyboard Shortcuts
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   // Ctrl/Cmd + Enter to submit forms
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     const form = document.querySelector('form');
     if (form) form.submit();
   }
-  
+
   // Escape to close popups
   if (e.key === 'Escape') {
     document.querySelectorAll('.synonym-popup').forEach(popup => popup.remove());
@@ -396,7 +409,7 @@ function showNotification(message, type = 'success') {
   `;
   notification.textContent = message;
   document.body.appendChild(notification);
-  
+
   setTimeout(() => {
     notification.style.animation = 'slideOutRight 0.3s ease-out';
     setTimeout(() => notification.remove(), 300);

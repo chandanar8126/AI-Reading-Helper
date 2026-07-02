@@ -1,18 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from datetime import datetime, timedelta
-import os, uuid
+import os, uuid, sqlite3, logging
 from PIL import Image
 from functools import wraps
+from flask_wtf.csrf import CSRFProtect
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Import all our modules
 from modules.ocr_module import extract_text
 from modules.simplify_module import simplify_text, get_text_statistics
 from modules.tts_module import generate_tts
-from modules.eyetracking_module import log_difficulty_event
 from database import (
     init_db, create_user, verify_user, get_user_by_id, update_last_login,
     add_reading_history, get_user_history, get_random_motivation,
-    hash_password, get_db
+    hash_password, get_db, log_struggle_word, get_struggle_words
 )
 from nltk.corpus import wordnet
 import random
@@ -23,6 +26,8 @@ app.secret_key = os.environ.get('SECRET_KEY', 'supersecretkey_change_in_producti
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+csrf = CSRFProtect(app)
 
 # Initialize database
 init_db()
@@ -137,13 +142,17 @@ def dashboard():
     
     # Get weekly progress
     weekly_progress = get_weekly_progress(session['user_id'])
+
+    # Words this reader's gaze lingered on (real-time struggle detection)
+    struggle_words = get_struggle_words(session['user_id'], limit=10)
     
     return render_template('dashboard.html',
                          user=user,
                          history=history,
                          motivation=motivation,
                          streak=streak,
-                         weekly_progress=weekly_progress)
+                         weekly_progress=weekly_progress,
+                         struggle_words=struggle_words)
 
 @app.route('/practice')
 def practice():
@@ -342,8 +351,11 @@ def bookmark_resource(resource_id):
         ''', (session['user_id'], resource_id))
         conn.commit()
         flash('Resource bookmarked!', 'success')
-    except:
+    except sqlite3.IntegrityError:
         flash('Already bookmarked!', 'info')
+    except sqlite3.Error as e:
+        logger.error(f"Bookmark insert failed: {e}")
+        flash('Could not bookmark this resource. Try again.', 'error')
     finally:
         conn.close()
     
@@ -365,21 +377,54 @@ def leaderboard():
     
     return render_template('leaderboard.html', top_users=[dict(u) for u in top_users])
 
+def get_synonyms_from_wordnet(word):
+    try:
+        from nltk.corpus import wordnet
+    except ImportError as e:
+        logger.warning('NLTK is not installed for synonym lookup: %s', e)
+        return []
+
+    try:
+        synonyms = set()
+        for syn in wordnet.synsets(word):
+            for lemma in syn.lemmas():
+                name = lemma.name().replace("_", " ")
+                if name.lower() != word.lower():
+                    synonyms.add(name)
+        return sorted(list(synonyms))[:10]
+
+    except LookupError as e:
+        logger.warning('NLTK WordNet data missing, attempting download: %s', e)
+        try:
+            import nltk
+            nltk.download('wordnet', quiet=True)
+            nltk.download('omw-1.4', quiet=True)
+            from nltk.corpus import wordnet
+            synonyms = set()
+            for syn in wordnet.synsets(word):
+                for lemma in syn.lemmas():
+                    name = lemma.name().replace("_", " ")
+                    if name.lower() != word.lower():
+                        synonyms.add(name)
+            return sorted(list(synonyms))[:10]
+        except Exception as inner_e:
+            logger.error('Failed to download or load WordNet data: %s', inner_e)
+            return []
+
+    except Exception as e:
+        logger.warning("Synonym lookup failed for '%s': %s", word, e)
+        return []
+
 @app.route('/synonym')
 def synonym():
     """Get synonyms for a word"""
-    word = request.args.get('word', '')
-    synonyms = set()
-    
-    try:
-        for syn in wordnet.synsets(word):
-            for lemma in syn.lemmas():
-                if lemma.name().lower() != word.lower():
-                    synonyms.add(lemma.name().replace('_', ' '))
-    except:
-        pass
-    
-    return jsonify({'synonyms': list(synonyms)[:8]})
+    word = request.args.get('word', '').strip()
+
+    if not word:
+        return jsonify({"synonyms": []})
+
+    synonyms = get_synonyms_from_wordnet(word)
+    return jsonify({"synonyms": synonyms})
 
 @app.route('/about')
 def about():
@@ -441,27 +486,27 @@ def start_tracking():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/log-difficulty', methods=['POST'])
-def log_difficulty():
-    """Log difficulty event from eye tracking"""
+@app.route('/log-struggle', methods=['POST'])
+def log_struggle():
+    """
+    Record a real-time reading-difficulty signal: a specific word the
+    reader's gaze lingered on. Called by WebGazer.js in result.html.
+    Works for guests too (just isn't persisted without a logged-in user).
+    """
     try:
-        text_id = request.json.get('text_id')
-        
+        data = request.get_json(silent=True) or {}
+        word = (data.get('word') or '').strip()
+        text_id = data.get('text_id')
+
+        if not word:
+            return jsonify({'status': 'error', 'message': 'No word provided'}), 400
+
         if 'user_id' in session:
-            conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO eye_tracking_events (user_id, event_type, text_id)
-                VALUES (?, ?, ?)
-            ''', (session['user_id'], 'difficulty_detected', text_id))
-            conn.commit()
-            conn.close()
-        
-        # Also log to file
-        log_difficulty_event()
-        
-        return jsonify({'status': 'logged'})
+            log_struggle_word(session['user_id'], word, text_id)
+
+        return jsonify({'status': 'logged', 'word': word})
     except Exception as e:
+        logger.error(f"Failed to log struggle word: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # --- HELPER FUNCTIONS ---
@@ -562,8 +607,10 @@ def unlock_achievement(user_id, achievement_id):
         cursor.execute('UPDATE users SET points = points + ? WHERE id = ?', (points, user_id))
         
         conn.commit()
-    except:
+    except sqlite3.IntegrityError:
         pass  # Already unlocked
+    except sqlite3.Error as e:
+        logger.error(f"Failed to unlock achievement {achievement_id} for user {user_id}: {e}")
     finally:
         conn.close()
 
@@ -621,10 +668,15 @@ def page_not_found(e):
 
 @app.errorhandler(500)
 def internal_error(e):
+    if request.path.startswith('/synonym'):
+        return jsonify({"synonyms": [], "error": "Internal server error"}), 500
     return render_template('500.html'), 500
 
 # --- RUN APP ---
 if __name__ == "__main__":
     print(" Starting AI Reading Helper...")
     print(" Running on http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Reloader disabled: the watchdog reloader was detecting filesystem
+    # touches inside the transformers library during model loading and
+    # restarting mid-request, killing /process with a connection reset.
+    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)

@@ -112,13 +112,13 @@ def extract_text(image_path):
 
         if not text:
 
-            return "⚠️ No readable text detected. Please upload a clearer image."
+            return " No readable text detected. Please upload a clearer image."
 
         return text
 
     except pytesseract.TesseractNotFoundError:
 
-        return "❌ Tesseract OCR not installed."
+        return " Tesseract OCR not installed."
 
     except Exception as e:
 

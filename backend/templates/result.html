@@ -2,369 +2,382 @@
 {% block content %}
 <section class="result-section">
   <div class="result-box">
-    <h3>Original Text</h3>
+    <h3>Original text</h3>
     <p id="original-text">{{ original_text }}</p>
   </div>
   <div class="result-box">
-    <h3>Simplified Text</h3>
+    <h3>Simplified text</h3>
     <p id="simplified-text" class="selectable-text">{{ simplified_text }}</p>
   </div>
-  
-  <!-- Audio Player -->
+
   {% if audio_path %}
-  <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: var(--shadow-lg); margin-top: 2rem;">
-    <h3 style="color: var(--primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-      🎧 Listen to Audio
-    </h3>
-    <audio controls autoplay style="width: 100%;">
+  <div class="card audio-card">
+    <h3>Listen to audio</h3>
+    <audio controls autoplay>
       <source src="{{ audio_path }}" type="audio/mp3">
       Your browser does not support the audio element.
     </audio>
   </div>
   {% endif %}
 
-  <!-- Action Buttons -->
-  <div style="text-align: center; margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-    <a href="{{ url_for('practice') }}" class="btn-primary">Try Another Text</a>
-    <a href="{{ url_for('history') }}" class="btn-secondary">View History</a>
+  <div class="result-actions">
+    <a href="{{ url_for('practice') }}" class="btn-primary">Try another text</a>
+    <a href="{{ url_for('history') }}" class="btn-secondary">View history</a>
   </div>
 
-  <!-- Help Text -->
-  <div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); border-radius: 12px;">
-    <p style="color: var(--gray-700); margin: 0;">
-      💡 <strong>Pro Tip:</strong> Double-click any word in the simplified text to see synonyms!
-    </p>
+  <div class="hint-box result-hint">
+    <strong>Tip:</strong> double-click any word in the simplified text to see synonyms.
   </div>
 </section>
 
-<!-- Add WebGazer for client-side gaze tracking -->
-<script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webgazer@2.0.1/dist/webgazer.min.js"></script>
 
 <script>
-const GAZE_DURATION_MS = 5000;
-let gazeActive = false;
-let gazeTimer = null;
-let currentGazeWord = null;
-let lastSpokenWord = null;
-let speechUtterance = null;
+  const GAZE_DURATION_MS = 2500;
+  let gazeActive = false;
+  let gazeTimer = null;
+  let currentGazeWord = null;
+  let lastSpokenWord = null;
+  let speechUtterance = null;
 
-function tokenizeSimplifiedText() {
-  const simplifiedNode = document.getElementById('simplified-text');
-  if (!simplifiedNode) return;
+  function tokenizeSimplifiedText() {
+    const simplifiedNode = document.getElementById('simplified-text');
+    if (!simplifiedNode) return;
 
-  const text = simplifiedNode.textContent.trim();
-  if (!text) return;
+    const text = simplifiedNode.textContent.trim();
+    if (!text) return;
 
-  const tokens = text.split(/(\s+)/); // keep spaces
-  simplifiedNode.innerHTML = tokens.map(token => {
-    if (/^\s+$/.test(token)) return token;
-    const escaped = token.replace(/"/g, '&quot;');
-    return `<span class="gaze-word" data-word="${escaped}">${token}</span>`;
-  }).join('');
-
-  simplifiedNode.querySelectorAll('.gaze-word').forEach(span => {
-    span.style.transition = 'background-color 0.35s ease';
-    span.style.cursor = 'text';
-  });
-}
-
-function clearWordHighlights() {
-  document.querySelectorAll('.gaze-word.focused-word').forEach(word => {
-    word.classList.remove('focused-word');
-    word.style.background = 'transparent';
-  });
-}
-
-function speakText(textToSpeak) {
-  if (!('speechSynthesis' in window)) return;
-
-  if (speechUtterance) {
-    window.speechSynthesis.cancel();
+    const tokens = text.split(/(\s+)/);
+    simplifiedNode.innerHTML = tokens.map(token => {
+      if (/^\s+$/.test(token)) return token;
+      const escaped = token.replace(/"/g, '&quot;');
+      return `<span class="gaze-word" data-word="${escaped}">${token}</span>`;
+    }).join('');
   }
 
-  speechUtterance = new SpeechSynthesisUtterance(textToSpeak);
-  speechUtterance.rate = 0.9;
-  speechUtterance.volume = 1;
-  window.speechSynthesis.speak(speechUtterance);
-}
-
-function trackGazePoint(data) {
-  if (!data) return;
-
-  const x = Math.round(data.x);
-  const y = Math.round(data.y);
-
-  // Show live coordinates for debug and calibration
-  let status = document.getElementById('gaze-debug-status');
-  if (!status) {
-    status = document.createElement('div');
-    status.id = 'gaze-debug-status';
-    status.style.cssText = 'position: fixed; bottom: 16px; left: 16px; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.75); color: #fff; font-size: 0.75rem; border-radius: 8px; z-index: 10001;';
-    document.body.appendChild(status);
+  function clearWordHighlights() {
+    document.querySelectorAll('.gaze-word.focused-word').forEach(word => {
+      word.classList.remove('focused-word');
+    });
   }
-  status.textContent = `Gaze at (${x}, ${y}), word: ${currentGazeWord || 'none'}`;
 
-  const el = document.elementFromPoint(x, y);
-  if (!el || !el.classList.contains('gaze-word')) {
-    if (gazeTimer) {
-      clearTimeout(gazeTimer);
-      gazeTimer = null;
+  function speakText(textToSpeak) {
+    if (!('speechSynthesis' in window)) return;
+    if (speechUtterance) window.speechSynthesis.cancel();
+    speechUtterance = new SpeechSynthesisUtterance(textToSpeak);
+    speechUtterance.rate = 0.9;
+    speechUtterance.volume = 1;
+    window.speechSynthesis.speak(speechUtterance);
+  }
+
+  function applyStruggleEmphasis(el) {
+    // Temporarily increase spacing/size around the struggled word so it's
+    // easier to re-read, then fade back after a few seconds.
+    el.classList.add('struggle-emphasis');
+    setTimeout(() => el.classList.remove('struggle-emphasis'), 8000);
+  }
+
+  function notifyServerOfStruggle(word) {
+    fetch('/log-struggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word: word, text_id: null })
+    }).catch(err => console.warn('Could not log struggle word:', err));
+  }
+
+  function trackGazePoint(data) {
+    if (!data) return;
+    const x = Math.round(data.x);
+    const y = Math.round(data.y);
+
+    const el = document.elementFromPoint(x, y);
+    if (!el || !el.classList.contains('gaze-word')) {
+      if (gazeTimer) { clearTimeout(gazeTimer); gazeTimer = null; }
+      currentGazeWord = null;
+      return;
     }
-    currentGazeWord = null;
-    return;
-  }
 
-  const word = el.dataset.word;
-  if (currentGazeWord !== word) {
-    clearWordHighlights();
-    currentGazeWord = word;
-    if (gazeTimer) clearTimeout(gazeTimer);
+    const word = el.dataset.word;
+    if (currentGazeWord !== word) {
+      clearWordHighlights();
+      currentGazeWord = word;
+      if (gazeTimer) clearTimeout(gazeTimer);
 
-    gazeTimer = setTimeout(() => {
-      if (currentGazeWord === word) {
-        el.classList.add('focused-word');
-        el.style.background = 'rgba(253, 224, 71, 0.75)';
-        if (lastSpokenWord !== word) {
-          speakText(word);
-          lastSpokenWord = word;
+      gazeTimer = setTimeout(() => {
+        if (currentGazeWord === word) {
+          el.classList.add('focused-word');
+          applyStruggleEmphasis(el);
+          notifyServerOfStruggle(word);
+
+          if (lastSpokenWord !== word) {
+            speakText(word);
+            lastSpokenWord = word;
+          }
+
+          // Auto-show synonyms — no click needed once a struggle is detected.
+          const rect = el.getBoundingClientRect();
+          fetchSynonyms(word, rect.left, rect.bottom);
         }
-      }
-    }, GAZE_DURATION_MS);
-  }
-}
-
-function startGazeTracking() {
-  if (gazeActive) return;
-  gazeActive = true;
-
-  if (!window.webgazer) {
-    console.warn('WebGazer not loaded. Eye tracking will not run.');
-    return;
+      }, GAZE_DURATION_MS);
+    }
   }
 
-  webgazer.setRegression('ridge')
-    .setGazeListener((data, elapsedTime) => {
-      if (!data) return;
-      trackGazePoint(data);
-    })
-    .begin();
+  const CALIBRATION_CLICKS_NEEDED = 5;
+  let calibrationData = {};
+  let calibrationActive = false;
 
-  // show video & prediction points for calibration (helps make gaze target accurate)
-  webgazer.showVideo(true).showPredictionPoints(true).showFaceOverlay(true).showFaceFeedbackBox(true);
+  function buildCalibrationOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'calibration-overlay';
+    overlay.className = 'calibration-overlay';
 
-  showNotification('Eye gaze tracking active. Move eyes around to calibrate, then hold on a word for 5s.', 'success');
-}
+    const intro = document.createElement('div');
+    intro.className = 'calibration-intro';
+    intro.innerHTML = `
+    <h3>Quick calibration</h3>
+    <p>Click each dot ${CALIBRATION_CLICKS_NEEDED} times while looking directly at it. This takes about 30 seconds and makes word-tracking far more accurate.</p>
+  `;
+    overlay.appendChild(intro);
 
+    const positions = [
+      [5, 5], [50, 5], [95, 5],
+      [5, 50], [50, 50], [95, 50],
+      [5, 95], [50, 95], [95, 95]
+    ];
 
-function stopGazeTracking() {
-  if (!gazeActive || !window.webgazer) return;
-  webgazer.pause();
-  gazeActive = false;
-  if (gazeTimer) {
-    clearTimeout(gazeTimer);
-    gazeTimer = null;
-  }
-  currentGazeWord = null;
-}
+    positions.forEach((pos, i) => {
+      const dot = document.createElement('button');
+      dot.className = 'calibration-dot';
+      dot.style.left = pos[0] + '%';
+      dot.style.top = pos[1] + '%';
+      dot.dataset.dotId = i;
+      dot.setAttribute('aria-label', 'Calibration point ' + (i + 1));
+      calibrationData[i] = 0;
 
-// Reuse existing synonyms code with initialization
-function initializeResultPage() {
-  tokenizeSimplifiedText();
-  const simplifiedText = document.getElementById('simplified-text');
-  if (simplifiedText) {
-    simplifiedText.style.userSelect = 'text';
+      dot.addEventListener('click', function () {
+        calibrationData[i] = Math.min(calibrationData[i] + 1, CALIBRATION_CLICKS_NEEDED);
+        const progress = calibrationData[i] / CALIBRATION_CLICKS_NEEDED;
+        dot.style.setProperty('--fill', progress);
+        if (calibrationData[i] >= CALIBRATION_CLICKS_NEEDED) {
+          dot.classList.add('calibration-dot-done');
+        }
+        checkCalibrationComplete();
+      });
 
-    simplifiedText.addEventListener('dblclick', function(e) {
-      const selection = window.getSelection();
-      const word = selection.toString().trim();
-      
-      if (word && word.split(' ').length === 1 && /^[a-zA-Z]+$/.test(word)) {
-        fetchSynonyms(word, e.clientX, e.clientY);
-      }
+      overlay.appendChild(dot);
     });
+
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn-secondary calibration-skip';
+    skipBtn.textContent = 'Skip calibration';
+    skipBtn.addEventListener('click', finishCalibration);
+    overlay.appendChild(skipBtn);
+
+    return overlay;
   }
 
-  const startButton = document.createElement('button');
-  startButton.textContent = 'Start gaze reader';
-  startButton.style.cssText = 'margin-top: 20px; padding: 0.75rem 1.1rem; font-size: 0.95rem; border-radius: 8px; border: 2px solid var(--primary); background: white; cursor: pointer;';
-  startButton.addEventListener('click', startGazeTracking);
+  function checkCalibrationComplete() {
+    const allDone = Object.values(calibrationData).every(c => c >= CALIBRATION_CLICKS_NEEDED);
+    if (allDone) finishCalibration();
+  }
 
-  const stopButton = document.createElement('button');
-  stopButton.textContent = 'Stop gaze reader';
-  stopButton.style.cssText = 'margin-top: 20px; padding: 0.75rem 1.1rem; font-size: 0.95rem; border-radius: 8px; border: 2px solid var(--secondary); background: white; cursor: pointer;';
-  stopButton.addEventListener('click', stopGazeTracking);
+  function finishCalibration() {
+    if (!calibrationActive) return;
+    calibrationActive = false;
+    const overlay = document.getElementById('calibration-overlay');
+    if (overlay) overlay.remove();
 
-  const actionRow = document.createElement('div');
-  actionRow.style.cssText = 'display:flex; gap: 1rem; justify-content:center; margin:1.5rem 0;';
-  actionRow.append(startButton, stopButton);
-  document.querySelector('.result-section').prepend(actionRow);
-}
+    webgazer.setGazeListener((data) => { if (data) trackGazePoint(data); });
+    showNotification('Calibration complete. Eye-gaze reading is now active.', 'success');
+  }
 
-window.addEventListener('DOMContentLoaded', initializeResultPage);
+  function startGazeTracking() {
+    if (gazeActive) return;
+    gazeActive = true;
 
-function fetchSynonyms(word, x, y) {
-  showLoadingPopup(word, x, y);
+    if (!window.webgazer) {
+      console.warn('WebGazer not loaded. Eye tracking will not run.');
+      showNotification('Eye tracking library failed to load.', 'error');
+      gazeActive = false;
+      return;
+    }
 
-  fetch(`/synonym?word=${encodeURIComponent(word)}`)
-    .then(response => response.json())
-    .then(data => {
-      const loadingPopup = document.querySelector('.synonym-popup');
-      if (loadingPopup) loadingPopup.remove();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showNotification('Webcam access is not supported by this browser.', 'error');
+      gazeActive = false;
+      return;
+    }
 
-      if (data.synonyms && data.synonyms.length > 0) {
-        showSynonymPopup(word, data.synonyms, x, y);
-      } else {
-        showSynonymPopup(word, ['No synonyms found'], x, y);
+    webgazer.setRegression('ridge');
+    showNotification('Requesting camera access. Please allow the webcam prompt.', 'info');
+
+    const beginResult = webgazer.begin();
+    const handleSuccess = () => {
+      webgazer.showVideo(true).showPredictionPoints(true).showFaceOverlay(true).showFaceFeedbackBox(true);
+      calibrationActive = true;
+      calibrationData = {};
+      document.body.appendChild(buildCalibrationOverlay());
+    };
+
+    const handleError = err => {
+      console.error('WebGazer begin failed:', err);
+      showNotification('Unable to start webcam. Please allow camera permissions or try a supported browser.', 'error');
+      gazeActive = false;
+    };
+
+    if (beginResult && typeof beginResult.then === 'function') {
+      beginResult.then(handleSuccess).catch(handleError);
+    } else {
+      try {
+        handleSuccess();
+      } catch (err) {
+        handleError(err);
       }
-    })
-    .catch(error => {
-      console.error('Error fetching synonyms:', error);
-      const loadingPopup = document.querySelector('.synonym-popup');
-      if (loadingPopup) loadingPopup.remove();
-      showSynonymPopup(word, ['Error loading synonyms'], x, y);
-    });
-}
+    }
+  }
 
-function showLoadingPopup(word, x, y) {
-  const popup = document.createElement('div');
-  popup.className = 'synonym-popup';
-  popup.style.cssText = `
-    position: fixed;
-    left: ${x}px;
-    top: ${y + 20}px;
-    background: white;
-    padding: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-    z-index: 10000;
-    min-width: 200px;
-    animation: fadeIn 0.2s ease-out;
+  function stopGazeTracking() {
+    if (!gazeActive || !window.webgazer) return;
+    webgazer.pause();
+    gazeActive = false;
+    calibrationActive = false;
+    const overlay = document.getElementById('calibration-overlay');
+    if (overlay) overlay.remove();
+    if (gazeTimer) { clearTimeout(gazeTimer); gazeTimer = null; }
+    currentGazeWord = null;
+  }
+
+  function initializeResultPage() {
+    tokenizeSimplifiedText();
+    const simplifiedText = document.getElementById('simplified-text');
+    if (simplifiedText) {
+      simplifiedText.addEventListener('dblclick', function (e) {
+        const selection = window.getSelection();
+        const word = selection.toString().trim();
+        if (word && word.split(' ').length === 1 && /^[a-zA-Z]+$/.test(word)) {
+          fetchSynonyms(word, e.clientX, e.clientY);
+        }
+      });
+    }
+
+    const actionRow = document.createElement('div');
+    actionRow.className = 'gaze-controls';
+
+    const startButton = document.createElement('button');
+    startButton.textContent = 'Start gaze reader';
+    startButton.className = 'btn-secondary';
+    startButton.addEventListener('click', startGazeTracking);
+
+    const stopButton = document.createElement('button');
+    stopButton.textContent = 'Stop gaze reader';
+    stopButton.className = 'btn-secondary';
+    stopButton.addEventListener('click', stopGazeTracking);
+
+    actionRow.append(startButton, stopButton);
+    document.querySelector('.result-section').prepend(actionRow);
+  }
+
+  window.addEventListener('DOMContentLoaded', initializeResultPage);
+
+  function fetchSynonyms(word, x, y) {
+    showLoadingPopup(word, x, y);
+
+    fetch(`/synonym?word=${encodeURIComponent(word)}`)
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => {
+            console.error(`Synonym API error ${response.status}:`, text);
+            throw new Error('Synonym API error');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        const loadingPopup = document.querySelector('.synonym-popup');
+        if (loadingPopup) loadingPopup.remove();
+        if (data && data.synonyms && data.synonyms.length > 0) {
+          showSynonymPopup(word, data.synonyms, x, y);
+        } else {
+          showSynonymPopup(word, ['No synonyms found'], x, y);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching synonyms:', error);
+        const loadingPopup = document.querySelector('.synonym-popup');
+        if (loadingPopup) loadingPopup.remove();
+        showSynonymPopup(word, ['Error loading synonyms'], x, y);
+      });
+  }
+
+  function showLoadingPopup(word, x, y) {
+    const popup = document.createElement('div');
+    popup.className = 'synonym-popup';
+    popup.style.left = `${x}px`;
+    popup.style.top = `${y + 20}px`;
+
+    popup.innerHTML = `
+    <div class="synonym-popup-title">Loading synonyms for "${word}"...</div>
+    <div class="synonym-popup-spinner"><div class="spinner"></div></div>
   `;
+    document.body.appendChild(popup);
+  }
 
-  popup.innerHTML = `
-    <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">
-      Loading synonyms for "${word}"...
-    </div>
-    <div style="text-align: center; padding: 1rem;">
-      <div style="display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(99, 102, 241, 0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s linear infinite;"></div>
-    </div>
-  `;
+  function showSynonymPopup(word, synonyms, x, y) {
+    const existingPopup = document.querySelector('.synonym-popup');
+    if (existingPopup) existingPopup.remove();
 
-  document.body.appendChild(popup);
-}
+    const popup = document.createElement('div');
+    popup.className = 'synonym-popup';
 
-function showSynonymPopup(word, synonyms, x, y) {
-  const existingPopup = document.querySelector('.synonym-popup');
-  if (existingPopup) existingPopup.remove();
+    const maxX = window.innerWidth - 320;
+    const maxY = window.innerHeight - 300;
+    popup.style.left = `${Math.min(x, maxX)}px`;
+    popup.style.top = `${Math.min(y + 20, maxY)}px`;
 
-  const popup = document.createElement('div');
-  popup.className = 'synonym-popup';
-
-  const maxX = window.innerWidth - 320;
-  const maxY = window.innerHeight - 300;
-  const adjustedX = Math.min(x, maxX);
-  const adjustedY = Math.min(y + 20, maxY);
-
-  popup.style.cssText = `
-    position: fixed;
-    left: ${adjustedX}px;
-    top: ${adjustedY}px;
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-    z-index: 10000;
-    min-width: 250px;
-    max-width: 300px;
-    animation: fadeIn 0.3s ease-out;
-    border: 2px solid var(--primary);
-  `;
-
-  const synonymHTML = synonyms.map(syn => `
-    <span style="
-      display: inline-block;
-      background: var(--gray-100);
-      padding: 0.4rem 0.9rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      color: var(--gray-700);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin: 0.25rem;
-      border: 2px solid transparent;
-    " onmouseover="this.style.background='var(--primary)'; this.style.color='white'; this.style.borderColor='var(--primary-dark)';" onmouseout="this.style.background='var(--gray-100)'; this.style.color='var(--gray-700)'; this.style.borderColor='transparent';" onclick="copyToClipboard('${syn}')">
-      ${syn}
-    </span>
+    const synonymHTML = synonyms.map(syn => `
+    <span class="synonym-chip" onclick="copyToClipboard('${syn}')">${syn}</span>
   `).join('');
 
-  popup.innerHTML = `
-    <div style="font-weight: 700; color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between;">
-      <span>📚 "${word}"</span>
-      <button onclick="this.closest('.synonym-popup').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-400); padding: 0; line-height: 1;">×</button>
+    popup.innerHTML = `
+    <div class="synonym-popup-header">
+      <span>"${word}"</span>
+      <button class="synonym-popup-close" onclick="this.closest('.synonym-popup').remove()">&times;</button>
     </div>
-    <div style="margin-bottom: 0.75rem; color: var(--gray-600); font-size: 0.85rem; font-weight: 600;">Synonyms:</div>
-    <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 1rem;">${synonymHTML}</div>
-    <button onclick="this.closest('.synonym-popup').remove()" style="width: 100%; padding: 0.7rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;">Close</button>
+    <div class="synonym-popup-label">Synonyms</div>
+    <div class="synonym-chip-row">${synonymHTML}</div>
+    <button class="btn-primary synonym-popup-done" onclick="this.closest('.synonym-popup').remove()">Close</button>
   `;
 
-  document.body.appendChild(popup);
+    document.body.appendChild(popup);
 
-  setTimeout(() => {
-    if (popup.parentElement) popup.remove();
-  }, 15000);
+    setTimeout(() => { if (popup.parentElement) popup.remove(); }, 15000);
 
-  setTimeout(() => {
-    document.addEventListener('click', function closePopup(e) {
-      if (!popup.contains(e.target)) {
-        popup.remove();
-        document.removeEventListener('click', closePopup);
-      }
-    });
-  }, 100);
-}
+    setTimeout(() => {
+      document.addEventListener('click', function closePopup(e) {
+        if (!popup.contains(e.target)) {
+          popup.remove();
+          document.removeEventListener('click', closePopup);
+        }
+      });
+    }, 100);
+  }
 
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    showNotification(`Copied "${text}" to clipboard!`, 'success');
-  }).catch(err => {
-    console.error('Failed to copy:', err);
-  });
-}
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showNotification(`Copied "${text}" to clipboard`, 'success');
+    }).catch(err => console.error('Failed to copy:', err));
+  }
 
-function showNotification(message, type) {
-  const notification = document.createElement('div');
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    z-index: 10001;
-    animation: slideInRight 0.3s ease-out;
-    font-weight: 600;
-  `;
-  notification.textContent = message;
-  document.body.appendChild(notification);
+  function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `toast-notification toast-${type || 'info'}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
 
-  setTimeout(() => {
-    notification.style.animation = 'slideOutRight 0.3s ease-out';
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
-}
-
-const gazeStyle = document.createElement('style');
-gazeStyle.textContent = `
-  @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes slideInRight { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-  @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
-  .selectable-text { user-select: text !important; cursor: text !important; }
-  .gaze-word.focused-word { box-shadow: 0 0 0 2px #f59e0b; }
-`;
-document.head.appendChild(gazeStyle);
+    setTimeout(() => {
+      notification.classList.add('toast-out');
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
 </script>
-
 {% endblock %}

@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime
-import hashlib
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 DATABASE = 'reading_helper.db'
@@ -134,19 +134,26 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             event_type TEXT,
+            word TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             text_id INTEGER,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
-    
+
+    # Migration: add 'word' column if upgrading from an older schema
+    cursor.execute("PRAGMA table_info(eye_tracking_events)")
+    existing_cols = [row[1] for row in cursor.fetchall()]
+    if 'word' not in existing_cols:
+        cursor.execute('ALTER TABLE eye_tracking_events ADD COLUMN word TEXT')
+
     conn.commit()
     conn.close()
     print(" Database initialized successfully!")
 
 def hash_password(password):
-    """Hash password using SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using Werkzeug's PBKDF2 (salted, slow-by-design)"""
+    return generate_password_hash(password, method='pbkdf2:sha256')
 
 def create_user(username, email, password, full_name):
     """Create a new user"""
@@ -168,18 +175,33 @@ def create_user(username, email, password, full_name):
         return None
 
 def verify_user(email, password):
-    """Verify user credentials"""
+    """Verify user credentials. Migrates legacy SHA-256 hashes to PBKDF2 on successful login."""
     conn = get_db()
     cursor = conn.cursor()
-    
-    hashed_pw = hash_password(password)
-    cursor.execute('''
-        SELECT * FROM users WHERE email = ? AND password = ?
-    ''', (email, hashed_pw))
-    
+
+    cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
     user = cursor.fetchone()
+
+    if not user:
+        conn.close()
+        return None
+
+    user = dict(user)
+    stored_hash = user['password']
+
+    if stored_hash.startswith('pbkdf2:'):
+        valid = check_password_hash(stored_hash, password)
+    else:
+        # Legacy SHA-256 hash from before the security fix.
+        import hashlib
+        valid = stored_hash == hashlib.sha256(password.encode()).hexdigest()
+        if valid:
+            new_hash = generate_password_hash(password, method='pbkdf2:sha256')
+            cursor.execute('UPDATE users SET password = ? WHERE id = ?', (new_hash, user['id']))
+            conn.commit()
+
     conn.close()
-    return dict(user) if user else None
+    return user if valid else None
 
 def get_user_by_id(user_id):
     """Get user by ID"""
@@ -301,9 +323,43 @@ def get_random_motivation():
     conn.close()
     return dict(quote) if quote else None
 
+def log_struggle_word(user_id, word, text_id=None):
+    """
+    Record that a reader's gaze lingered on this word long enough to be
+    flagged as a struggle signal. Called from the /log-struggle route,
+    triggered by WebGazer.js in the browser.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO eye_tracking_events (user_id, event_type, word, text_id)
+        VALUES (?, ?, ?, ?)
+    ''', (user_id, 'word_struggle', word.lower().strip(), text_id))
+    conn.commit()
+    conn.close()
+
+def get_struggle_words(user_id, limit=15):
+    """
+    Return this user's most frequently struggled-on words, most recent
+    occurrence and total count, for display on their dashboard.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT word, COUNT(*) as occurrences, MAX(timestamp) as last_seen
+        FROM eye_tracking_events
+        WHERE user_id = ? AND event_type = 'word_struggle' AND word IS NOT NULL AND word != ''
+        GROUP BY word
+        ORDER BY occurrences DESC, last_seen DESC
+        LIMIT ?
+    ''', (user_id, limit))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
 # Initialize database on import
 if __name__ == "__main__":
     init_db()
     seed_motivations()
     seed_achievements()
-    print("🎉 Database setup complete!")
+    print("Database setup complete!")

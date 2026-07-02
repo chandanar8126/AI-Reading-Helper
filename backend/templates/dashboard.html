@@ -3,200 +3,126 @@
 
 <div class="dashboard-container">
 
-  <!-- Welcome Section -->
   <div class="welcome-section">
-    <h1 class="welcome-title">Welcome back, {{ current_user.full_name }} 👋</h1>
-    <p class="welcome-subtitle">A calm and focused reading space designed for you</p>
+    <h1>Welcome back, {{ current_user.full_name }}</h1>
+    <p>A calm, focused reading space built around how you read.</p>
   </div>
 
-  <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card">
       <h2>{{ current_user.total_texts_simplified }}</h2>
-      <p>Texts Simplified</p>
+      <p>Texts simplified</p>
     </div>
-
     <div class="stat-card">
       <h2>{{ streak }}</h2>
-      <p>Day Streak 🔥</p>
+      <p>Day streak</p>
     </div>
-
     <div class="stat-card">
       <h2>{{ current_user.points }}</h2>
-      <p>Points ⭐</p>
+      <p>Points</p>
     </div>
-
     <div class="stat-card">
-      <h2>{{ current_user.reading_level }}</h2>
-      <p>Reading Level</p>
+      <span class="level-pill {{ current_user.reading_level }}">{{ current_user.reading_level }}</span>
+      <p>Reading level</p>
     </div>
   </div>
 
-  <!-- Main Grid -->
   <div class="dashboard-grid">
 
-    <!-- Left -->
-    <div>
+    <div class="dashboard-main">
       <div class="card">
-        <h3>📊 Weekly Progress</h3>
+        <h3 class="card-title">Weekly progress</h3>
         <canvas id="weeklyChart"></canvas>
       </div>
 
       <div class="card">
-        <h3>📜 Recent Activity</h3>
+        <h3 class="card-title">Recent activity</h3>
+        {% if history %}
         {% for item in history %}
         <div class="activity-item">
-          <p>{{ item.original_text[:60] }}...</p>
+          <p>{{ item.original_text[:80] }}{% if item.original_text|length > 80 %}…{% endif %}</p>
         </div>
         {% endfor %}
+        {% else %}
+        <p class="empty-state">No reading activity yet. Simplify your first text to see it here.</p>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Words you struggle with</h3>
+        <p class="card-subtitle">
+          Detected automatically while you read — your gaze lingering on a word for a couple seconds counts as a
+          struggle signal.
+        </p>
+        {% if struggle_words %}
+        <div class="struggle-word-list">
+          {% for sw in struggle_words %}
+          <div class="struggle-word-chip">
+            <span class="struggle-word-text">{{ sw.word }}</span>
+            <span class="struggle-word-count">{{ sw.occurrences }}×</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">
+          No struggle data yet. While reading a simplified text, the eye-tracking reader (enable it on the result page)
+          will start picking these up.
+        </p>
+        {% endif %}
       </div>
     </div>
 
-    <!-- Right -->
-    <div class="sidebar">
-
+    <div class="dashboard-sidebar">
       <div class="card">
-        <h3>⚡ Quick Actions</h3>
-        <a href="{{ url_for('practice') }}" class="btn primary">✨ Simplify Text</a>
-        <a href="{{ url_for('resources') }}" class="btn">📚 Learn</a>
-        <a href="{{ url_for('profile') }}" class="btn">👤 Profile</a>
+        <h3 class="card-title">Quick actions</h3>
+        <a href="{{ url_for('practice') }}" class="btn-primary dashboard-action">Simplify text</a>
+        <a href="{{ url_for('resources') }}" class="btn-secondary dashboard-action">Browse resources</a>
+        <a href="{{ url_for('profile') }}" class="btn-secondary dashboard-action">View profile</a>
       </div>
 
       <div class="card">
-        <h3>💡 Reading Tips</h3>
-        <ul>
-          <li>Read 20 minutes daily</li>
-          <li>Increase difficulty gradually</li>
-          <li>Click words to learn meanings</li>
+        <h3 class="card-title">Reading tips</h3>
+        <ul class="tips-list">
+          <li>Read in short, regular sessions rather than long ones.</li>
+          <li>Increase difficulty gradually as words feel familiar.</li>
+          <li>Double-click any word in a result to see simpler alternatives.</li>
         </ul>
       </div>
 
+      {% if motivation %}
+      <div class="card motivation-card">
+        <p>{{ motivation.quote }}</p>
+      </div>
+      {% endif %}
     </div>
 
   </div>
 </div>
 
-<style>
-
-/* GLOBAL STYLING - ACCESSIBILITY FIRST */
-body {
-  background: #f5f7fb;
-  font-family: Arial, Verdana, sans-serif;
-  line-height: 1.8;
-  letter-spacing: 0.05em;
-  color: #1e293b;
-}
-
-.dashboard-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: auto;
-}
-
-/* WELCOME */
-.welcome-title {
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.welcome-subtitle {
-  color: #475569;
-  margin-top: 5px;
-}
-
-/* STATS */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  gap: 1rem;
-  margin: 2rem 0;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  transition: 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-3px);
-}
-
-/* GRID */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-}
-
-/* CARD */
-.card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-/* BUTTONS */
-.btn {
-  display: block;
-  margin: 0.5rem 0;
-  padding: 0.8rem;
-  border-radius: 8px;
-  text-align: center;
-  background: #e2e8f0;
-  color: #1e293b;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.btn.primary {
-  background: #6366f1;
-  color: white;
-}
-
-.btn:hover {
-  opacity: 0.9;
-}
-
-/* ACTIVITY */
-.activity-item {
-  background: #f1f5f9;
-  padding: 10px;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-
-/* SIDEBAR */
-.sidebar {
-  position: sticky;
-  top: 20px;
-}
-
-/* RESPONSIVE */
-@media(max-width:900px){
-  .stats-grid {grid-template-columns:1fr 1fr;}
-  .dashboard-grid {grid-template-columns:1fr;}
-}
-
-</style>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const ctx = document.getElementById('weeklyChart');
-if(ctx){
- const data = {{ weekly_progress|tojson }};
- new Chart(ctx,{
-  type:'line',
-  data:{
-    labels:data.map(d=>d.date),
-    datasets:[{data:data.map(d=>d.texts), tension:0.4}]
-  }
- });
+  const ctx = document.getElementById('weeklyChart');
+  if (ctx) {
+    const data = {{ weekly_progress| tojson
+  }};
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.date),
+      datasets: [{
+        label: 'Texts simplified',
+        data: data.map(d => d.texts),
+        borderColor: '#3F7268',
+        backgroundColor: 'rgba(63, 114, 104, 0.1)',
+        tension: 0.35,
+        fill: true
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
 }
 </script>
 

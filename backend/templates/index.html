@@ -5,6 +5,7 @@
     <h2>Simplify Text or Upload an Image</h2>
 
     <form id="simplifyForm" action="{{ url_for('process') }}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label class="field">Paste text</label>
       <textarea name="text_input" id="text_input" placeholder="Paste or type text..."></textarea>
 
